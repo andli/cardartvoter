@@ -91,15 +91,32 @@
   document.addEventListener("DOMContentLoaded", function () {
     // Get all cards and attach click handlers
     const cards = document.querySelectorAll(".voting-card");
+    let voteInProgress = false; // Track if a vote is already being processed
 
     // Attach click handlers to each card
     cards.forEach((card) => {
-      card.addEventListener("click", async function () {
+      card.addEventListener("click", async function (e) {
+        // Prevent multiple rapid clicks
+        if (voteInProgress) {
+          console.log("Vote already in progress - ignoring click");
+          e.preventDefault();
+          return;
+        }
+
+        voteInProgress = true;
+
+        // Disable all cards immediately
+        cards.forEach((c) => {
+          c.classList.add("disabled");
+          c.style.pointerEvents = "none";
+        });
+
         const cardId = this.dataset.cardId;
         console.log("Card clicked, ID:", cardId);
 
         if (!cardId) {
           console.error("Missing card ID on clicked element:", this);
+          voteInProgress = false;
           return;
         }
 
@@ -116,6 +133,7 @@
 
         if (!otherCardId) {
           console.error("Could not find other card ID");
+          voteInProgress = false;
           return;
         }
 
@@ -169,12 +187,24 @@
             const error = await response.json();
             console.error("Vote failed:", error);
             alert("Error submitting vote. Please try again.");
+            // Re-enable cards after error
+            voteInProgress = false;
+            cards.forEach((c) => {
+              c.classList.remove("disabled");
+              c.style.pointerEvents = "auto";
+            });
           }
         } catch (error) {
           console.error("Error submitting vote:", error);
           alert(
             "Network error when submitting vote. Please check your connection."
           );
+          // Re-enable cards after error
+          voteInProgress = false;
+          cards.forEach((c) => {
+            c.classList.remove("disabled");
+            c.style.pointerEvents = "auto";
+          });
         }
       });
     });
