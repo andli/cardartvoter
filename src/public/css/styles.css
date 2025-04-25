@@ -256,7 +256,8 @@ footer {
 /* Mobile adjustments */
 @media (max-width: 575.98px) {
   .vs-badge-container {
-    margin: 10px 0;
+    position: relative;
+    /* Adjust margin or transform to raise the VS badge */
   }
 
   .vs-badge {
@@ -272,7 +273,9 @@ footer {
 /* Desktop/tablet adjustments */
 @media (min-width: 576px) {
   .vs-badge-container {
-    margin: 0 15px;
+    position: relative;
+    /* Adjust margin or transform to raise the VS badge */
+    margin-top: -100px; /* Move badge up by approx. height of card info area */
   }
 }
 
