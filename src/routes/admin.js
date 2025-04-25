@@ -54,4 +54,37 @@ router.get("/test", (req, res) => {
   res.json({ message: "Admin route is working" });
 });
 
+// Add this route to your existing admin.js file
+
+// Reset all card rankings
+router.post("/reset-rankings", adminAuth, async (req, res) => {
+  try {
+    console.log("Admin request to reset all card rankings");
+
+    // Reset all cards to default rating and zero comparisons
+    const result = await Card.updateMany(
+      {}, // Match all documents
+      {
+        $set: {
+          rating: 1500, // Reset to default rating
+          comparisons: 0, // Reset comparison count
+        },
+      }
+    );
+
+    res.json({
+      success: true,
+      message: `Successfully reset rankings for ${result.modifiedCount} cards`,
+      count: result.modifiedCount,
+    });
+  } catch (error) {
+    console.error("Failed to reset rankings:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to reset rankings",
+      error: error.message,
+    });
+  }
+});
+
 module.exports = router;

@@ -90,4 +90,45 @@ async function importCards() {
   console.log(`Import complete. Added ${imported} new cards.`);
 }
 
-importCards().catch(console.error);
+async function resetAllRankings() {
+  console.log("Connecting to MongoDB to reset all card rankings...");
+  const client = new MongoClient(uri);
+
+  try {
+    await client.connect();
+    const db = client.db();
+    const collection = db.collection("cards");
+
+    console.log("Resetting all card ratings to 1500 and comparisons to 0...");
+
+    // Update all cards to reset ratings and comparisons
+    const result = await collection.updateMany(
+      {}, // Match all documents
+      {
+        $set: {
+          rating: 1500, // Reset to default rating
+          comparisons: 0, // Reset comparison count
+        },
+      }
+    );
+
+    console.log(`Reset complete. ${result.modifiedCount} card rankings reset.`);
+    return result.modifiedCount;
+  } catch (error) {
+    console.error("Error resetting rankings:", error);
+    throw error;
+  } finally {
+    await client.close();
+  }
+}
+
+// Export the function
+module.exports = {
+  importCards,
+  resetAllRankings,
+};
+
+// Keep the direct invocation for running as a script
+if (require.main === module) {
+  importCards().catch(console.error);
+}
