@@ -12,7 +12,18 @@
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
       rel="stylesheet"
     />
+    <!-- Add Permanent Marker font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
   </head>
   <body>
     <%- include('components/header') %>
@@ -26,53 +37,28 @@
             class="d-flex flex-column flex-sm-row justify-content-center align-items-center"
           >
             <div class="voting-container mb-4 mb-sm-0 mx-auto mx-sm-2">
-              <div class="card voting-card" data-card-id="<%= cards[0].id %>">
-                <img
-                  src="<%= cards[0].imageUrl %>"
-                  alt="<%= cards[0].name %>"
-                  class="card-img-top"
-                />
-                <div class="card-body">
-                  <h5 class="card-title text-center text-sm-start">
-                    <%= cards[0].name %>
-                  </h5>
-                  <p class="card-text mb-1 text-center text-sm-start">
-                    Artist: <%= cards[0].artist %>
-                  </p>
-                </div>
-              </div>
+              <%- include('components/card', {card: cards[0]}) %>
+            </div>
+
+            <!-- VS Badge -->
+            <div
+              class="vs-badge-container d-flex justify-content-center align-items-center"
+            >
+              <div class="vs-badge">VS</div>
             </div>
 
             <div class="voting-container mx-auto mx-sm-2">
-              <div class="card voting-card" data-card-id="<%= cards[1].id %>">
-                <img
-                  src="<%= cards[1].imageUrl %>"
-                  alt="<%= cards[1].name %>"
-                  class="card-img-top"
-                />
-                <div class="card-body">
-                  <h5 class="card-title text-center text-sm-start">
-                    <%= cards[1].name %>
-                  </h5>
-                  <p class="card-text mb-1 text-center text-sm-start">
-                    Artist: <%= cards[1].artist %>
-                  </p>
-                </div>
-              </div>
+              <%- include('components/card', {card: cards[1]}) %>
             </div>
           </div>
           <% } %>
-
-          <p class="text-center mt-3 mt-sm-4 mb-0">
-            Click the card you like best
-          </p>
         </div>
 
         <!-- Rankings section -->
         <div class="rankings col-lg-4 order-2 order-lg-2 mb-lg-0 mx-3 mx-lg-0">
           <div class="card">
             <div class="card-header">
-              <h2 class="h5 mb-0">Top 10 Cards</h2>
+              <h2 class="h5 mb-0">Top 10 card art</h2>
             </div>
             <div class="card-body p-0">
               <% if (topRankings && topRankings.length > 0) { %>

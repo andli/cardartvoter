@@ -1,9 +1,15 @@
-<!-- filepath: /cardartvoter/cardartvoter/src/views/components/card.ejs -->
-<div class="card">
-    <img src="<%= card.imageUrl %>" alt="<%= card.name %>" class="card-img-top">
+<div class="voting-container mb-4 mb-sm-0 mx-auto mx-sm-2">
+  <div class="card voting-card" data-card-id="<%= card.id %>">
+    <img
+      src="<%= card.imageUrl %>"
+      alt="<%= card.name %>"
+      class="card-img-top"
+    />
     <div class="card-body">
-        <h5 class="card-title"><%= card.name %></h5>
-        <p class="card-text">Rating: <%= card.rating %></p>
-        <button class="btn btn-primary vote-button" data-card-id="<%= card.id %>">Vote</button>
+      <h5 class="card-title text-center text-sm-start"><%= card.name %></h5>
+      <p class="card-text mb-1 text-center text-sm-start">
+        <i class="fas fa-paint-brush me-1"></i> <%= card.artist %>
+      </p>
     </div>
+  </div>
 </div>

@@ -4,6 +4,7 @@
   --light-color: #ecf0f1;
   --dark-color: #34495e;
   --gray-color: #95a5a6;
+  --dark-gray-color: #4f5c6d;
 }
 
 * {
@@ -82,17 +83,12 @@ header {
   object-fit: cover;
 }
 
-.card-info {
-  padding: 10px;
-}
-
-.card-info h3 {
+.voting-card .card-body .card-title {
   font-size: 1rem;
-  margin-bottom: 3px;
+  color: var(--gray-color);
 }
-
-.card-info p {
-  font-size: 0.9rem;
+.voting-card .card-body .card-text {
+  font-size: 0.8rem;
   color: var(--gray-color);
 }
 
@@ -149,6 +145,49 @@ footer {
   text-align: center;
   font-size: 0.9rem;
   color: var(--gray-color);
+}
+
+/* Updated VS Badge styling with better gradient clipping */
+.vs-badge {
+  font-family: "Permanent Marker", cursive;
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -2px;
+  display: inline-block;
+  padding: 0.2em;
+  color: transparent;
+  background: linear-gradient(
+    to bottom,
+    #ffcc00 0%,
+    #ff6600 40%,
+    #ff0000 60%,
+    #800000 100%
+  );
+  background-size: 100% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-stroke: 2px black;
+  text-stroke: 2px black;
+  position: relative;
+}
+
+/* Mobile adjustments */
+@media (max-width: 575.98px) {
+  .vs-badge-container {
+    margin: 10px 0;
+  }
+
+  .vs-badge {
+    font-size: 3rem;
+  }
+}
+
+/* Desktop/tablet adjustments */
+@media (min-width: 576px) {
+  .vs-badge-container {
+    margin: 0 15px;
+  }
 }
 
 /* Desktop */
