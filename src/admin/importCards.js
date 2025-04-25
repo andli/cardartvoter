@@ -3,34 +3,42 @@ const Card = require("../models/Card");
 
 async function importCardsWithRateLimiting(query) {
   try {
-    console.log(`Starting import with query: ${query || "default bulk data"}`);
+    console.log(
+      `Starting import with query: ${query || "unique artwork bulk data"}`
+    );
 
     // Step 1: Get the latest bulk data information
     const bulkDataResponse = await axios.get(
       "https://api.scryfall.com/bulk-data"
     );
-    const defaultBulkData = bulkDataResponse.data.data.find(
-      (item) => item.type === "default_cards" // or "oracle_cards" for a smaller set
+
+    // Changed to use unique_artwork instead of default_cards
+    const artworkBulkData = bulkDataResponse.data.data.find(
+      (item) => item.type === "unique_artwork"
     );
 
-    if (!defaultBulkData) {
-      throw new Error("Could not find default bulk data download URL");
+    if (!artworkBulkData) {
+      throw new Error("Could not find unique artwork bulk data download URL");
     }
 
-    console.log(`Fetching bulk data from: ${defaultBulkData.download_uri}`);
-    console.log(`Bulk data was updated at: ${defaultBulkData.updated_at}`);
+    console.log(
+      `Fetching unique artwork bulk data from: ${artworkBulkData.download_uri}`
+    );
+    console.log(`Bulk data was updated at: ${artworkBulkData.updated_at}`);
 
-    // Step 2: Download the bulk data (this can be several MB)
-    const cardsResponse = await axios.get(defaultBulkData.download_uri);
+    // Step 2: Download the bulk data (214 MB according to your message)
+    const cardsResponse = await axios.get(artworkBulkData.download_uri);
     const allCards = cardsResponse.data;
 
-    console.log(`Downloaded ${allCards.length} cards from bulk data`);
+    console.log(
+      `Downloaded ${allCards.length} unique artwork cards from bulk data`
+    );
 
     // Step 3: Filter cards based on query if provided
+    // Note: We're keeping filtering capability but removing default filters
     let cardsToImport = allCards;
-    if (query) {
-      // IMPORTANT: This is a very simplified query parser
-      // For a real implementation, you'd need a more robust parser
+    if (query && query !== "unique_artwork") {
+      // This allows for custom queries but doesn't default to any filters
       const filters = query
         .split(" ")
         .map((part) => {
@@ -42,33 +50,29 @@ async function importCardsWithRateLimiting(query) {
         })
         .filter(Boolean);
 
-      cardsToImport = allCards.filter((card) => {
-        for (const filter of filters) {
-          const field = filter.field.replace(/^-/, "");
+      // Only apply filtering if we actually have filters
+      if (filters.length > 0) {
+        console.log(`Applying custom filters: ${query}`);
+        cardsToImport = allCards.filter((card) => {
+          for (const filter of filters) {
+            const field = filter.field.replace(/^-/, "");
 
-          // Handle special cases
-          if (field === "is" && filter.value === "booster") {
-            const result = card.booster === true;
-            return filter.exclude ? !result : result;
-          }
-          if (field === "is" && filter.value === "digital") {
-            const result = card.digital === true;
-            return filter.exclude ? !result : result;
-          }
-          if (field === "set") {
-            const result = card.set === filter.value;
-            return filter.exclude ? !result : result;
-          }
-        }
-        return true;
-      });
+            // Simple filtering logic for common fields
+            if (field === "set") {
+              const result = card.set === filter.value;
+              return filter.exclude ? !result : result;
+            }
 
-      console.log(
-        `Filtered to ${cardsToImport.length} cards matching query: ${query}`
-      );
+            // Add other field filters as needed
+          }
+          return true;
+        });
+      }
     }
 
-    // Step 4: Import the cards
+    console.log(`Preparing to import ${cardsToImport.length} cards`);
+
+    // Step 4: Import the filtered cards
     let imported = 0;
 
     for (const card of cardsToImport) {
@@ -101,7 +105,7 @@ async function importCardsWithRateLimiting(query) {
         await newCard.save();
         imported++;
 
-        // Log progress
+        // Log progress periodically
         if (imported % 100 === 0) {
           console.log(`Imported ${imported} cards so far`);
         }
@@ -113,7 +117,9 @@ async function importCardsWithRateLimiting(query) {
       }
     }
 
-    console.log(`Import completed. Added ${imported} new cards.`);
+    console.log(
+      `Import completed. Added ${imported} new unique artwork cards.`
+    );
     return imported;
   } catch (error) {
     console.error("Error during card import:", error);
