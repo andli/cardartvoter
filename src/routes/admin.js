@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { downloadAndImportCards } = require("../admin/importCards");
+const { importCardsWithRateLimiting } = require("../admin/importCards");
 
 // Simple admin auth middleware
 const adminAuth = (req, res, next) => {
@@ -13,10 +13,16 @@ const adminAuth = (req, res, next) => {
 // Admin route to trigger card import
 router.post("/import-cards", adminAuth, async (req, res) => {
   try {
-    const result = await downloadAndImportCards();
+    // Use the correct function name and pass a query parameter
+    const query = req.body.query || req.query.query || "is:booster -is:digital";
+
+    console.log(`Starting import with query: ${query}`);
+    const added = await importCardsWithRateLimiting(query);
+
     res.json({
       success: true,
-      message: `Import completed successfully: ${result.processed} cards processed, ${result.added} new cards added`,
+      message: `Import completed successfully: ${added} new cards added`,
+      added,
     });
   } catch (error) {
     console.error("Import failed:", error);
@@ -33,4 +39,4 @@ router.get("/test", (req, res) => {
   res.json({ message: "Admin route is working" });
 });
 
-module.exports = router; // Make sure this is included
+module.exports = router;
