@@ -10,7 +10,7 @@ class ScryfallService {
     this.processing = false;
 
     // Configure rate limiting - 50-100ms between requests
-    this.requestDelay = 100; // milliseconds
+    this.requestDelay = 50; // milliseconds
   }
 
   /**
