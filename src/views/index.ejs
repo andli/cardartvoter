@@ -29,15 +29,7 @@
       <% } else { %>
       <div class="alert alert-info">
         <h4 class="alert-heading">No Cards Available</h4>
-        <p>
-          The database is currently empty. Please import some cards using the
-          admin interface.
-        </p>
-        <hr />
-        <p class="mb-0">
-          If you're the site administrator, you can import cards by visiting
-          <code>/admin/import?key=YOUR_ADMIN_KEY</code> with your admin key.
-        </p>
+        <p>The database is currently empty. Please contac and admin.</p>
       </div>
       <% } %>
     </div>
@@ -79,12 +71,6 @@
                   >
                     <%= card.name %>
                   </div>
-                  <small class="text-muted">
-                    <span class="ranking-rating"
-                      ><%= card.formattedRating %></span
-                    >
-                    points (<%= card.comparisons %> votes)
-                  </small>
                 </div>
               </a>
             </li>
