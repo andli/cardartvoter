@@ -10,7 +10,7 @@ Clicking on the card to vote for it should show the change in ranking for the wi
 
 After a while (a month?) the ranking could be reset and historical rankings can be saved and browsed through.
 
-Card art and data like unique id numbers for cards will be fetched from the Scryfall API.
+Card art and data like unique id numbers for cards will be fetched from the Scryfall API. We adhere to Scryfall's Rate Limits and Good Citizenship.
 
 ## TODO:
 
@@ -19,8 +19,8 @@ Card art and data like unique id numbers for cards will be fetched from the Scry
 - Error loading card art handling; display a message and load a new pair
 - Handle double sided cards
 - Filter out weird cards and tokens(?)
-- A dedicated rankings page with live updating rankings events
-- List most popular artists, most popular red cards, etc etc on the Rankings page
+- Add a page with live updating rankings events
+- List most most popular red cards, etc etc on the Rankings page
 
 ## Ranking algorithm
 
