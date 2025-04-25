@@ -96,6 +96,19 @@
                           <%= artist.name || 'Unknown' %>
                         </a>
                       </div>
+                                              </div>
+                        <small class="text-muted">
+                          Notable: <% if (artist.notableScryfallId) { %>
+                          <!-- Link to Scryfall if we have an ID -->
+                          <a
+                            href="https://scryfall.com/card/<%= artist.notableScryfallId %>"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            ><%= artist.bestCard %></a
+                          >
+                          <% } else { %> <%= artist.bestCard %> <% } %>
+                        </small>
+
                     </div>
                   </td>
                   <td class="text-end align-middle">
