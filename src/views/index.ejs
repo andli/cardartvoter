@@ -68,22 +68,37 @@
                   <span class="fw-bold text-end" style="min-width: 28px"
                     ><%= index + 1 %>.</span
                   >
-                  <img
-                    src="<%= getArtCropUrl(card.scryfallId) %>"
-                    alt="<%= card.name %>"
-                    class="ms-2 me-2 rounded"
-                    style="width: 40px; height: 40px; object-fit: cover"
-                    onerror="this.onerror=null; this.src='/api/card-back-thumb';"
-                  />
-                  <div class="flex-grow-1">
-                    <div class="fw-medium text-start" title="<%= card.name %>">
-                      <%= card.name %>
+
+                  <!-- Wrap the content in a link to Scryfall -->
+                  <a
+                    href="https://scryfall.com/card/<%= card.scryfallId %>"
+                    class="d-flex align-items-center text-decoration-none flex-grow-1"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img
+                      src="<%= getArtCropUrl(card.scryfallId) %>"
+                      alt="<%= card.name %>"
+                      class="ms-2 me-2 rounded"
+                      style="width: 40px; height: 40px; object-fit: cover"
+                      onerror="this.onerror=null; this.src='/api/card-back-thumb';"
+                    />
+
+                    <div class="flex-grow-1">
+                      <div
+                        class="fw-medium text-start text-dark"
+                        title="<%= card.name %>"
+                      >
+                        <%= card.name %>
+                      </div>
+                      <small class="text-muted">
+                        <span class="ranking-rating"
+                          ><%= card.formattedRating %></span
+                        >
+                        points (<%= card.comparisons %> votes)
+                      </small>
                     </div>
-                    <small class="text-muted">
-                      <span class="ranking-rating"><%= card.rating %></span>
-                      points (<%= card.comparisons %> votes)
-                    </small>
-                  </div>
+                  </a>
                 </li>
                 <% }) %>
               </ul>
@@ -102,37 +117,14 @@
 
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        // Format the rating numbers
-        try {
-          setTimeout(() => {
-            const rankingElements =
-              document.querySelectorAll(".ranking-rating");
-            console.log(`Found ${rankingElements.length} ranking elements`);
-
-            if (rankingElements && rankingElements.length > 0) {
-              rankingElements.forEach((el) => {
-                if (el && el.textContent) {
-                  try {
-                    const rating = parseInt(el.textContent || "0");
-                    el.textContent = rating.toLocaleString();
-                  } catch (err) {
-                    console.error("Error formatting rating:", err);
-                  }
-                }
-              });
-            }
-          }, 100);
-        } catch (error) {
-          console.error("Error processing rankings:", error);
-        }
-
+        // Get all cards and attach click handlers
         const cards = document.querySelectorAll(".voting-card");
 
         // Attach click handlers to each card
         cards.forEach((card) => {
           card.addEventListener("click", async function () {
-            console.log("Card clicked, ID:", this.dataset.cardId);
             const cardId = this.dataset.cardId;
+            console.log("Card clicked, ID:", cardId);
 
             if (!cardId) {
               console.error("Missing card ID on clicked element:", this);
@@ -160,11 +152,6 @@
 
             // Send vote to server
             try {
-              console.log("Sending vote:", {
-                selectedCardId: cardId,
-                cardId: otherCardId,
-              });
-
               const response = await fetch("/api/vote", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -178,14 +165,22 @@
                 const result = await response.json();
                 console.log("Vote successful:", result);
 
-                // Show rating change animation
+                // Show rating change animation with arrow
                 const ratingChange = result.winner.change;
                 const changeElement = document.createElement("div");
                 changeElement.className = "rating-change";
-                changeElement.textContent =
-                  ratingChange > 0 ? `+${ratingChange}` : ratingChange;
-                changeElement.style.color =
-                  ratingChange > 0 ? "#28a745" : "#dc3545";
+
+                // Use an arrow icon instead of the number
+                if (ratingChange > 0) {
+                  // Add a Font Awesome up arrow icon
+                  changeElement.innerHTML = '<i class="fas fa-arrow-up"></i>';
+                  changeElement.style.color = "#28a745"; // Green for positive
+                } else {
+                  // For negative changes (rare in this context)
+                  changeElement.innerHTML = '<i class="fas fa-arrow-down"></i>';
+                  changeElement.style.color = "#dc3545"; // Red for negative
+                }
+
                 this.appendChild(changeElement);
 
                 // Animate
@@ -201,9 +196,13 @@
               } else {
                 const error = await response.json();
                 console.error("Vote failed:", error);
+                alert("Error submitting vote. Please try again.");
               }
             } catch (error) {
               console.error("Error submitting vote:", error);
+              alert(
+                "Network error when submitting vote. Please check your connection."
+              );
             }
           });
         });

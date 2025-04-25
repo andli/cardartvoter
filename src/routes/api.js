@@ -67,9 +67,6 @@ router.post("/vote", async (req, res) => {
   try {
     const { selectedCardId, cardId } = req.body;
 
-    console.log("Selected Card ID:", selectedCardId);
-    console.log("Other Card ID:", cardId);
-
     // Validate input
     if (!selectedCardId || !cardId) {
       return res.status(400).json({ message: "Missing required card IDs" });

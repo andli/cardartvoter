@@ -10,12 +10,16 @@ exports.getHomePage = async (req, res) => {
     // Get top ranked cards
     const topRankings = await rankingService.getTopRankings(10, 1);
 
+    // Format the ratings server-side
+    topRankings.forEach((card) => {
+      card.formattedRating = card.rating.toLocaleString();
+    });
+
     // Render with required data
     res.render("index", {
       title: "Card Art Voter",
       cards: cards || [],
       topRankings: topRankings || [],
-      // Use the shared helpers instead of a local function
       getArtCropUrl: imageHelpers.getArtCropUrl,
       getSmallCardUrl: imageHelpers.getSmallCardUrl,
     });
