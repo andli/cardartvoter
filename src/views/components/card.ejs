@@ -20,9 +20,17 @@
 <form
   id="voteForm-<%= card.scryfallId %>"
   method="POST"
-  action="/vote"
+  action="/api/vote"
   style="display: none"
 >
   <input type="hidden" name="selectedCardId" value="<%= card.scryfallId %>" />
   <input type="hidden" name="pairId" value="<%= pairId %>" />
+  <!-- Add the other card ID so both cards are in the request -->
+  <input
+    type="hidden"
+    name="cardId"
+    value="<%= pairId === locals.pairId ? 
+    (card.scryfallId === cards[0].scryfallId ? cards[1].scryfallId : cards[0].scryfallId) : 
+    '' %>"
+  />
 </form>
