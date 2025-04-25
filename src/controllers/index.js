@@ -2,40 +2,34 @@ const cardService = require("../services/cardService");
 const rankingService = require("../services/rankingService");
 const imageHelpers = require("../utils/imageHelpers");
 
+// In your getHomePage controller, store the current card pair in the session
 exports.getHomePage = async (req, res) => {
   try {
-    // Get two cards to compare
     const cards = await cardService.getCardPair();
+    const topRankings = await rankingService.getTopRankings(10, 1);
 
-    // Check if we have cards to compare
-    const hasCards = cards && cards.length >= 2;
-
-    // Only try to get rankings if we have cards
-    const topRankings = hasCards
-      ? await rankingService.getTopRankings(10, 1)
-      : [];
-
-    // Format the ratings server-side if we have rankings
-    if (topRankings.length > 0) {
-      topRankings.forEach((card) => {
-        card.formattedRating = card.rating.toLocaleString();
-      });
+    // Store the current card pair in the session
+    if (cards.length === 2) {
+      req.session.currentPair = {
+        card1: cards[0].scryfallId,
+        card2: cards[1].scryfallId,
+        timestamp: Date.now(),
+      };
     }
 
-    // Render with required data
+    // Rest of your existing code
     res.render("index", {
-      title: "Card Art Voter",
-      cards: cards || [],
-      hasCards: hasCards,
-      topRankings: topRankings || [],
+      title: "Home",
+      cards,
+      topRankings,
+      hasCards: cards.length === 2,
       getArtCropUrl: imageHelpers.getArtCropUrl,
       getSmallCardUrl: imageHelpers.getSmallCardUrl,
     });
   } catch (error) {
     console.error("Error loading homepage:", error);
-    res.status(500).render("error", {
-      message: "Failed to load cards for voting",
-      error: process.env.NODE_ENV === "development" ? error : {},
-    });
+    res
+      .status(500)
+      .render("error", { message: "Error loading homepage", error });
   }
 };
