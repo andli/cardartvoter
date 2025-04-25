@@ -2,7 +2,12 @@
   <div class="row gy-4">
     <!-- Voting section -->
     <div class="col-lg-8 order-1 order-lg-1">
-      <% if (cards && cards.length >= 2) { %>
+      <% if (hasCards) { %>
+      <h1 class="h4 mb-3">Which card art do you prefer?</h1>
+      <p class="text-muted mb-4">
+        Click on the card with the artwork you find most appealing.
+      </p>
+
       <div
         class="d-flex flex-column flex-sm-row justify-content-center align-items-center"
       >
@@ -20,6 +25,19 @@
         <div class="voting-container mx-auto mx-sm-2">
           <%- include('components/card', {card: cards[1]}) %>
         </div>
+      </div>
+      <% } else { %>
+      <div class="alert alert-info">
+        <h4 class="alert-heading">No Cards Available</h4>
+        <p>
+          The database is currently empty. Please import some cards using the
+          admin interface.
+        </p>
+        <hr />
+        <p class="mb-0">
+          If you're the site administrator, you can import cards by visiting
+          <code>/admin/import?key=YOUR_ADMIN_KEY</code> with your admin key.
+        </p>
       </div>
       <% } %>
     </div>

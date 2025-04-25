@@ -7,18 +7,26 @@ exports.getHomePage = async (req, res) => {
     // Get two cards to compare
     const cards = await cardService.getCardPair();
 
-    // Get top ranked cards
-    const topRankings = await rankingService.getTopRankings(10, 1);
+    // Check if we have cards to compare
+    const hasCards = cards && cards.length >= 2;
 
-    // Format the ratings server-side
-    topRankings.forEach((card) => {
-      card.formattedRating = card.rating.toLocaleString();
-    });
+    // Only try to get rankings if we have cards
+    const topRankings = hasCards
+      ? await rankingService.getTopRankings(10, 1)
+      : [];
+
+    // Format the ratings server-side if we have rankings
+    if (topRankings.length > 0) {
+      topRankings.forEach((card) => {
+        card.formattedRating = card.rating.toLocaleString();
+      });
+    }
 
     // Render with required data
     res.render("index", {
       title: "Card Art Voter",
       cards: cards || [],
+      hasCards: hasCards,
       topRankings: topRankings || [],
       getArtCropUrl: imageHelpers.getArtCropUrl,
       getSmallCardUrl: imageHelpers.getSmallCardUrl,
