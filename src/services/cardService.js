@@ -18,8 +18,8 @@ exports.getCardPair = async () => {
       return [];
     }
 
-    // Increase randomness - 25% completely random
-    if (Math.random() < 0.25) {
+    // Increase randomness - increase to 50% completely random selections
+    if (Math.random() < 0.5) {
       // Use aggregate with $sample for better randomness
       const randomCards = await Card.aggregate([
         { $match: { enabled: true } },
@@ -28,60 +28,48 @@ exports.getCardPair = async () => {
       return randomCards;
     }
 
-    // More randomness in finding less-seen cards
-    const randomSkip = Math.floor(
-      Math.random() * Math.min(50, totalCards / 10)
-    );
-    const lessSeenCard = await Card.findOne({ enabled: true })
-      .sort({ comparisons: 1 })
-      .skip(randomSkip)
-      .lean();
-
-    if (!lessSeenCard) {
-      throw new Error("Error finding card");
-    }
-
-    // Find another card with more randomness
-    const rating = lessSeenCard.rating;
-    const ratingRange = 300; // Wider range for more variety
-
-    // Use aggregate for second card to ensure real randomness
-    const secondCardQuery = await Card.aggregate([
+    // For the other 50%, use a better strategy to find under-represented cards
+    // Use the aggregation pipeline with $sample to get cards with fewer comparisons
+    const lessSeenCards = await Card.aggregate([
+      { $match: { enabled: true } },
+      // Group cards into buckets by comparison count
+      // 0-5, 6-20, 21-50, 51-100, >100
       {
-        $match: {
-          scryfallId: { $ne: lessSeenCard.scryfallId },
-          enabled: true,
-          rating: {
-            $gte: rating - ratingRange,
-            $lte: rating + ratingRange,
+        $bucket: {
+          groupBy: "$comparisons",
+          boundaries: [0, 6, 21, 51, 101],
+          default: "many",
+          output: {
+            count: { $sum: 1 },
+            cards: { $push: "$$ROOT" },
           },
         },
       },
-      { $sample: { size: 1 } },
+      // Sort by bucket (prioritize less-compared cards)
+      { $sort: { _id: 1 } },
+      // Get the first non-empty bucket
+      { $match: { count: { $gt: 0 } } },
+      { $limit: 1 },
+      // Unwind to get individual cards
+      { $unwind: "$cards" },
+      // Get a random sample from this bucket
+      { $sample: { size: 2 } },
+      // Just return the card
+      { $replaceRoot: { newRoot: "$cards" } },
     ]);
 
-    const secondCard = secondCardQuery.length > 0 ? secondCardQuery[0] : null;
-
-    if (!secondCard) {
-      // Fallback - just get any random card that's not the same
-      const fallbackCard = await Card.aggregate([
-        {
-          $match: {
-            scryfallId: { $ne: lessSeenCard.scryfallId },
-            enabled: true,
-          },
-        },
-        { $sample: { size: 1 } },
-      ]);
-
-      if (!fallbackCard.length) {
-        throw new Error("Could not find a second card");
-      }
-
-      return [lessSeenCard, fallbackCard[0]];
+    // If we got two cards, return them
+    if (lessSeenCards && lessSeenCards.length === 2) {
+      return lessSeenCards;
     }
 
-    return [lessSeenCard, secondCard];
+    // Fallback to pure random if the bucketing approach didn't work
+    const fallbackCards = await Card.aggregate([
+      { $match: { enabled: true } },
+      { $sample: { size: 2 } },
+    ]);
+
+    return fallbackCards;
   } catch (error) {
     console.error("Error fetching card pair:", error);
     return [];
