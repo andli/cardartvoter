@@ -2,10 +2,10 @@
   "name": "cardartvoter",
   "version": "1.0.0",
   "description": "Web app for rating card game artwork",
-  "main": "server.js",
+  "main": "app.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
     "test": "jest"
   },
   "dependencies": {
