@@ -17,7 +17,7 @@ Card art and data like unique id numbers for cards will be fetched from the Scry
 - Handle double sided cards
 - Filter out weird cards and tokens(?)
 - A dedicated rankings page with live updating rankings events
-- List most popular artists
+- List most popular artists, most popular red cards, etc etc on the Rankings page
 
 ## Ranking algorithm
 
