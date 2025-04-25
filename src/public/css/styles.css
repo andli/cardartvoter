@@ -353,3 +353,13 @@ footer {
   font-weight: 500;
   letter-spacing: 0.5px;
 }
+
+/* Make links inside table rows inherit color and remove decoration */
+.table a.text-inherit {
+  color: inherit;
+  text-decoration: none;
+}
+
+.table a.text-inherit:hover {
+  text-decoration: none;
+}

@@ -92,7 +92,15 @@
 
                       <div>
                         <div class="fw-medium">
-                          <%= artist.name || 'Unknown' %>
+                          <a
+                            href="https://scryfall.com/search?q=a%3A%22<%= encodeURIComponent(artist.name) %>%22&unique=art"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="text-inherit"
+                            style="text-decoration: none; color: inherit"
+                          >
+                            <%= artist.name || 'Unknown' %>
+                          </a>
                         </div>
                         <small class="text-muted">
                           Notable: <% if (artist.notableScryfallId) { %>
