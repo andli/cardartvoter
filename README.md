@@ -53,5 +53,5 @@ Confidence Tracking: Record the number of comparisons for each card
   - Server-rendered pages with EJS templating
   - Bootstrap 5 for styling
   - Client-side JavaScript for interactive features
-- **Real-time Communication:** Socket.IO for live rankings
-- **Deployment:** Vercel & MongoDB Atlas (planned)
+- **Real-time Communication:** Socket.IO for live rankings (planned)
+- **Deployment:** Vercel & MongoDB Atlas

@@ -9,16 +9,6 @@ exports.getHomePage = async (req, res) => {
     const cards = await cardService.getCardPair();
     const topRankings = await rankingService.getTopRankings(10, 1);
 
-    // Debug log to see what cards are being returned
-    console.log(
-      "Cards fetched:",
-      cards.map((c) => ({
-        id: c.scryfallId,
-        name: c.name,
-        hasImage: !!c.imageUrl,
-      }))
-    );
-
     // Generate and store pair ID if we have cards
     let pairId = null;
     if (cards.length === 2) {
