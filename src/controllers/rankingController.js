@@ -6,11 +6,9 @@ exports.displayRankings = async (req, res) => {
   try {
     // CHANGED: Use minimum 1 comparison to match the index page
     const topCards = await rankingService.getTopRankings(20, 1);
-    console.log(`Found ${topCards.length} top ranked cards`);
 
     // Get top 20 artists with at least 3 cards
     const topArtists = await rankingService.getTopArtists(20, 3);
-    console.log(`Found ${topArtists.length} top artists`);
 
     // Get additional data for notable cards
     const enhancedArtists = await Promise.all(
