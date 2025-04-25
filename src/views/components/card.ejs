@@ -1,9 +1,13 @@
 <div class="voting-container mb-4 mb-sm-0 mx-auto mx-sm-2">
-  <div class="card voting-card" data-card-id="<%= card.id %>">
+  <!-- Debug - remove this in production -->
+  <!-- Card data: <%= JSON.stringify({name: card.name, id: card.scryfallId}) %> -->
+
+  <div class="card voting-card" data-card-id="<%= card.scryfallId %>">
     <img
       src="<%= card.imageUrl %>"
       alt="<%= card.name %>"
       class="card-img-top"
+      onerror="this.onerror=null; this.src='/img/card-back.jpg';"
     />
     <div class="card-body">
       <h5 class="card-title text-center text-sm-start"><%= card.name %></h5>

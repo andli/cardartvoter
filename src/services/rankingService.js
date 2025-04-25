@@ -1,44 +1,23 @@
+const Card = require("../models/Card");
+
 /**
- * Service for managing card rankings
+ * Get top ranked cards
  */
-class RankingService {
-  /**
-   * Get all rankings
-   * @returns {Promise<Array>} All ranked cards
-   */
-  async getRankings() {
-    // TODO: Implement actual database query
-    return Promise.resolve([]);
+exports.getTopRankings = async (limit = 10, minComparisons = 5) => {
+  try {
+    // Make sure to select all needed fields
+    const topRankings = await Card.find({
+      enabled: true,
+      comparisons: { $gte: minComparisons },
+    })
+      .select("name artist scryfallId rating comparisons") // Explicitly include scryfallId
+      .sort({ rating: -1 })
+      .limit(limit)
+      .lean();
+
+    return topRankings;
+  } catch (error) {
+    console.error("Error fetching top rankings:", error);
+    return [];
   }
-
-  /**
-   * Get top ranked cards
-   * @param {number} limit - Number of top cards to return
-   * @returns {Promise<Array>} Top ranked cards
-   */
-  async getTopRankings(limit = 10) {
-    try {
-      // For now, return dummy data
-      // Later, implement actual database query
-      const dummyRankings = [];
-
-      for (let i = 1; i <= limit; i++) {
-        dummyRankings.push({
-          id: `card-${i}`,
-          name: `Example Card ${i}`,
-          artist: "Sample Artist",
-          imageUrl: `https://via.placeholder.com/40x55?text=${i}`,
-          rating: 1500 - i * 10,
-          comparisons: 50 - i,
-        });
-      }
-
-      return dummyRankings;
-    } catch (error) {
-      console.error("Error fetching top rankings:", error);
-      return [];
-    }
-  }
-}
-
-module.exports = new RankingService();
+};

@@ -33,3 +33,10 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Import helper functions
+const imageHelpers = require("./utils/imageHelpers");
+
+// Make helper functions available in all templates
+app.locals.getArtCropUrl = imageHelpers.getArtCropUrl;
+app.locals.getSmallCardUrl = imageHelpers.getSmallCardUrl;

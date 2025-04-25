@@ -1,75 +1,84 @@
 // This file contains business logic related to card operations, such as fetching cards from the Scryfall API.
 
-const axios = require("axios");
+const Card = require("../models/Card");
 
-class CardService {
-  constructor() {
-    this.scryfallBaseUrl = "https://api.scryfall.com";
+/**
+ * Get a pair of cards for voting comparison
+ */
+exports.getCardPair = async () => {
+  const count = await Card.countDocuments({ enabled: true });
+
+  if (count < 2) {
+    throw new Error("Not enough cards available for comparison");
   }
 
-  async getCardPair() {
-    try {
-      // Get two random cards with artwork
-      const card1 = await this.getRandomCard();
-      const card2 = await this.getRandomCard();
+  // Increase randomness - 25% completely random
+  if (Math.random() < 0.25) {
+    // Use aggregate with $sample for better randomness
+    const randomCards = await Card.aggregate([
+      { $match: { enabled: true } },
+      { $sample: { size: 2 } },
+    ]);
+    return randomCards;
+  }
 
-      // Make sure we have two different cards
-      if (card1.id === card2.id) {
-        card2 = await this.getRandomCard();
-      }
+  // More randomness in finding less-seen cards
+  const randomSkip = Math.floor(Math.random() * Math.min(50, count / 10));
+  const lessSeenCard = await Card.findOne({ enabled: true })
+    .sort({ comparisons: 1 })
+    .skip(randomSkip)
+    .lean();
 
-      return [card1, card2];
-    } catch (error) {
-      console.error("Error fetching card pair:", error);
-      throw error;
+  if (!lessSeenCard) {
+    throw new Error("Error finding card");
+  }
+
+  // Find another card with more randomness
+  const rating = lessSeenCard.rating;
+  const ratingRange = 300; // Wider range for more variety
+
+  // Use aggregate for second card to ensure real randomness
+  const secondCardQuery = await Card.aggregate([
+    {
+      $match: {
+        scryfallId: { $ne: lessSeenCard.scryfallId },
+        enabled: true,
+        rating: {
+          $gte: rating - ratingRange,
+          $lte: rating + ratingRange,
+        },
+      },
+    },
+    { $sample: { size: 1 } },
+  ]);
+
+  const secondCard = secondCardQuery.length > 0 ? secondCardQuery[0] : null;
+
+  if (!secondCard) {
+    // Fallback - just get any random card that's not the same
+    const fallbackCard = await Card.aggregate([
+      {
+        $match: {
+          scryfallId: { $ne: lessSeenCard.scryfallId },
+          enabled: true,
+        },
+      },
+      { $sample: { size: 1 } },
+    ]);
+
+    if (!fallbackCard.length) {
+      throw new Error("Could not find a second card");
     }
+
+    return [lessSeenCard, fallbackCard[0]];
   }
 
-  async getRandomCard() {
-    try {
-      // Only get cards that have art
-      const response = await axios.get(
-        `${this.scryfallBaseUrl}/cards/random?q=game:paper+has:image`
-      );
+  return [lessSeenCard, secondCard];
+};
 
-      const card = response.data;
-
-      // Format the card data for our needs
-      return {
-        id: card.id,
-        name: card.name,
-        set: card.set_name,
-        artist: card.artist || "Unknown Artist",
-        imageUrl:
-          card.image_uris?.normal ||
-          card.image_uris?.large ||
-          card.image_uris?.png,
-      };
-    } catch (error) {
-      console.error("Error fetching random card:", error);
-      throw error;
-    }
-  }
-
-  async fetchAllCards() {
-    // Implementation for fetching all cards (paginated)
-    return [];
-  }
-
-  async fetchCardById(id) {
-    try {
-      const response = await axios.get(`${this.scryfallBaseUrl}/cards/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching card ${id}:`, error);
-      throw error;
-    }
-  }
-
-  async compareCards(cardId1, cardId2) {
-    // This would be implemented with your ELO algorithm later
-    return { winner: cardId1, loser: cardId2 };
-  }
-}
-
-module.exports = new CardService();
+/**
+ * Get a card by its Scryfall ID
+ */
+exports.getCardByScryfallId = async (scryfallId) => {
+  return await Card.findOne({ scryfallId }).lean();
+};

@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 
 const cardSchema = new mongoose.Schema(
   {
-    // Essential identification
     scryfallId: {
       type: String,
       required: true,
