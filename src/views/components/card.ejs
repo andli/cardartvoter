@@ -1,0 +1,9 @@
+<!-- filepath: /cardartvoter/cardartvoter/src/views/components/card.ejs -->
+<div class="card">
+    <img src="<%= card.imageUrl %>" alt="<%= card.name %>" class="card-img-top">
+    <div class="card-body">
+        <h5 class="card-title"><%= card.name %></h5>
+        <p class="card-text">Rating: <%= card.rating %></p>
+        <button class="btn btn-primary vote-button" data-card-id="<%= card.id %>">Vote</button>
+    </div>
+</div>

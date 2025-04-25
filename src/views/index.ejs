@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Card Art Voter</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <%- include('components/header') %>
+
+    <div class="container py-4">
+      <div class="row gx-5">
+        <!-- Voting section -->
+        <div class="col-lg-8">
+          <% if (cards && cards.length >= 2) { %>
+          <div class="d-flex flex-column flex-md-row align-items-center">
+            <div class="voting-container mx-auto mx-md-2 mb-4">
+              <div class="card voting-card" data-card-id="<%= cards[0].id %>">
+                <img
+                  src="<%= cards[0].imageUrl %>"
+                  alt="<%= cards[0].name %>"
+                  class="card-img-top"
+                />
+                <div class="card-body">
+                  <h5 class="card-title"><%= cards[0].name %></h5>
+                  <p class="card-text mb-1">Artist: <%= cards[0].artist %></p>
+                </div>
+              </div>
+            </div>
+
+            <div class="voting-container mx-auto mx-md-2 mb-4">
+              <div
+                class="card voting-card h-100"
+                data-card-id="<%= cards[1].id %>"
+              >
+                <img
+                  src="<%= cards[1].imageUrl %>"
+                  alt="<%= cards[1].name %>"
+                  class="card-img-top"
+                />
+                <div class="card-body">
+                  <h5 class="card-title"><%= cards[1].name %></h5>
+                  <p class="card-text mb-1">Artist: <%= cards[1].artist %></p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <% } %>
+
+          <p class="text-center mt-1">Click the card you like best</p>
+        </div>
+
+        <!-- Rankings section -->
+        <div class="rankings col-lg-4 ps-0">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="h5 mb-0">Top 10 Cards</h2>
+            </div>
+            <div class="card-body p-0">
+              <% if (topRankings && topRankings.length > 0) { %>
+              <ul class="list-group list-group-flush">
+                <% topRankings.forEach((card, index) => { %>
+                <li class="list-group-item d-flex align-items-center">
+                  <span class="me-2 fw-bold"><%= index + 1 %>.</span>
+                  <img
+                    src="<%= card.imageUrl %>"
+                    alt="<%= card.name %>"
+                    width="40"
+                    class="me-2"
+                    style="height: 55px; object-fit: cover"
+                  />
+                  <div>
+                    <small class="text-muted"><%= card.rating %> points</small>
+                  </div>
+                </li>
+                <% }) %>
+              </ul>
+              <% } else { %>
+              <p class="p-3">No rankings available yet.</p>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%- include('components/footer') %>
+
+    <script>
+      document.querySelectorAll(".voting-card").forEach((card) => {
+        card.addEventListener("click", async function () {
+          const cardId = this.dataset.cardId;
+          const otherCardId = document.querySelector(
+            `.voting-card:not([data-card-id="${cardId}"])`
+          ).dataset.cardId;
+
+          try {
+            const response = await fetch("/api/vote", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                cardId: otherCardId, // loser
+                selectedCardId: cardId, // winner
+              }),
+            });
+
+            if (response.ok) {
+              window.location.reload();
+            }
+          } catch (error) {
+            console.error("Error submitting vote:", error);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

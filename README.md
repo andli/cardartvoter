@@ -10,11 +10,21 @@ After a while (a month?) the ranking could be reset and historical rankings can 
 
 Card art and data like unique id numbers for cards will be fetched from the Scryfall API.
 
+## Ranking algorithm
+
 The ranking algorithm is Elo:
 
 - Each card can accumulate a rating over time regardless of how many total cards exist
 - New cards can enter the pool without disrupting the overall system
 - Partial data still produces useful rankings
+
+Initial Rating: Start all cards at 1200 or 1500 points
+K-Factor: Use a higher K-factor (32-64) for new cards and lower (16-24) for established ones
+Confidence Tracking: Record the number of comparisons for each card
+Card Selection Logic:
+Prioritize showing cards with fewer comparisons
+Try to match cards with similar ratings (within ~200 points)
+Occasionally randomize to avoid "bubbles" of similar cards
 
 ## Features to implement further on
 
