@@ -57,32 +57,33 @@ router.get("/test", (req, res) => {
 
 // Add this route to your existing admin.js file
 
-// Reset all card rankings
-router.post("/reset-rankings", adminAuth, async (req, res) => {
+// Initialize or refresh stats
+router.post("/refresh-stats", adminAuth, async (req, res) => {
   try {
-    console.log("Admin request to reset all card rankings");
+    console.log("Admin request to refresh statistics counts");
 
-    // Reset all cards to default rating and zero comparisons
-    const result = await Card.updateMany(
-      {}, // Match all documents
-      {
-        $set: {
-          rating: 1500, // Reset to default rating
-          comparisons: 0, // Reset comparison count
-        },
-      }
-    );
+    const statsService = require("../services/statsService");
+
+    // Use the updated methods with proper error handling
+    const cardCount = await statsService.getCardCount(true);
+    console.log(`Refreshed card count: ${cardCount}`);
+
+    const voteCount = await statsService.getVoteCount(true);
+    console.log(`Refreshed vote count: ${voteCount}`);
 
     res.json({
       success: true,
-      message: `Successfully reset rankings for ${result.modifiedCount} cards`,
-      count: result.modifiedCount,
+      message: "Statistics refreshed successfully",
+      stats: {
+        cardCount,
+        voteCount,
+      },
     });
   } catch (error) {
-    console.error("Failed to reset rankings:", error);
+    console.error("Error refreshing stats:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to reset rankings",
+      message: "Failed to refresh statistics",
       error: error.message,
     });
   }

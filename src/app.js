@@ -71,25 +71,26 @@ const imageHelpers = require("./utils/imageHelpers");
 app.locals.getArtCropUrl = imageHelpers.getArtCropUrl;
 app.locals.getSmallCardUrl = imageHelpers.getSmallCardUrl;
 
-const cardService = require("./services/cardService");
+const statsService = require("./services/statsService");
 
-// Override the default render method to always include card count and title
+// Override the default render method
 const originalRender = app.response.render;
 app.response.render = async function (view, options, callback) {
   try {
-    const count = await cardService.getTotalCardCount();
+    // Get counts with auto-refresh when stale
+    const [cardCount, voteCount] = await Promise.all([
+      statsService.getCardCount(),
+      statsService.getVoteCount(),
+    ]);
+
     options = options || {};
-    options.cardCount = count; // This will override any existing cardCount
+    options.cardCount = cardCount;
+    options.voteCount = voteCount;
+    options.title = options.title || "Card Art Voter";
 
-    // Add a default title if none is provided
-    if (options.title === undefined) {
-      options.title = "Card Art Voter"; // Default title
-    }
-
-    // Call the original render with our enhanced options
     return originalRender.call(this, view, options, callback);
   } catch (error) {
-    console.error("Error enhancing render with card count:", error);
+    console.error("Error enhancing render with stats:", error);
     return originalRender.call(this, view, options, callback);
   }
 };
