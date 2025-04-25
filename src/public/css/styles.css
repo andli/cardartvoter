@@ -312,3 +312,17 @@ footer {
   font-weight: 600;
   letter-spacing: 0.4px;
 }
+
+.navbar {
+  font-family: "Crimson Text", serif;
+}
+.navbar-brand {
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.nav-link {
+  font-size: 1.2rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
