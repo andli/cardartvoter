@@ -254,75 +254,28 @@ footer {
   }
 }
 
-/* Card interaction styles */
-.voting-card {
-  cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  position: relative; /* Required for absolute positioning of rating change */
-}
-
-.voting-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-.card-selected {
-  box-shadow: 0 0 0 3px #28a745, 0 0 15px rgba(0, 0, 0, 0.3) !important;
-  transform: translateY(-5px) !important;
-}
-
-.rating-change {
-  position: absolute;
-  top: 40%;
-  left: 50%;
-  transform: translate(-50%, 0);
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 5px 15px;
-  border-radius: 20px;
-  font-weight: bold;
-  font-size: 1.5rem;
-  opacity: 0;
-  transition: all 0.5s ease;
-  z-index: 100;
-  pointer-events: none;
-}
-
-/* Ranking thumbnails */
-.rankings-section .list-group-item img {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  background-color: #f0f0f0;
-  transition: transform 0.2s;
-}
-
-.rankings-section .list-group-item img:hover {
-  transform: scale(1.5);
-  z-index: 10;
-}
-
 /* Add this to your existing styles */
-.card-header h2,
-.rankings h2,
-.card-header .h5 {
-  font-family: "Crimson Text", serif;
-  font-weight: 600;
-  letter-spacing: 0.4px;
+
+/* Card selection styles */
+.voting-card {
+  position: relative;
+  transition: all 0.2s ease;
 }
 
-.navbar {
-  font-family: "Crimson Text", serif;
+/* Instant feedback glow - appears immediately on click */
+.card-clicked {
+  box-shadow: inset 0 0 20px 5px rgba(40, 167, 69, 0.7) !important;
 }
-.navbar-brand {
-  font-size: 1.8rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+
+/* Enhanced selected state */
+.card-selected {
+  transform: scale(1.02);
+  box-shadow: 0 0 0 3px #28a745, inset 0 0 20px 5px rgba(40, 167, 69, 0.5);
+  z-index: 5;
 }
-.nav-link {
-  font-size: 1.2rem;
-  font-weight: 500;
-  letter-spacing: 0.5px;
+
+/* Unselected card styling */
+.card-unselected {
+  opacity: 0.7;
+  filter: grayscale(30%);
 }

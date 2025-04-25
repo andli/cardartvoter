@@ -105,6 +105,9 @@
         voteInProgress = true;
         const selectedCardId = this.dataset.cardId;
 
+        // INSTANT FEEDBACK - Apply immediately on click
+        this.classList.add("card-clicked");
+
         // Find the other card
         let otherCardId = null;
         let otherCardElement = null;
@@ -112,6 +115,8 @@
           if (c.dataset.cardId !== selectedCardId) {
             otherCardId = c.dataset.cardId;
             otherCardElement = c;
+            // Dim the unselected card instantly
+            c.classList.add("card-unselected");
           }
         });
 
@@ -120,9 +125,6 @@
           c.classList.add("disabled");
           c.style.pointerEvents = "none";
         });
-
-        // Highlight selected card
-        this.classList.add("card-selected");
 
         // Submit vote via API
         fetch("/api/vote", {
@@ -138,33 +140,30 @@
         })
           .then((response) => response.json())
           .then((data) => {
-            // Show rating changes with arrows instead of numbers
-            const selectedElement = this;
-
-            // Create and show arrow up badge for winner
+            // Create and show arrow badges
             const winnerBadge = document.createElement("div");
             winnerBadge.className = "rating-badge winner";
             winnerBadge.innerHTML = '<i class="fas fa-arrow-up"></i>';
-            selectedElement.appendChild(winnerBadge);
+            this.appendChild(winnerBadge);
 
-            // Create and show arrow down badge for loser
             const loserBadge = document.createElement("div");
             loserBadge.className = "rating-badge loser";
             loserBadge.innerHTML = '<i class="fas fa-arrow-down"></i>';
             otherCardElement.appendChild(loserBadge);
 
-            // Wait a moment to show the changes, then redirect
+            // Quick transition to next pair
             setTimeout(() => {
               window.location.href = "/";
-            }, 1500);
+            }, 800); // Reduced from 1500ms to 800ms for snappier experience
           })
           .catch((error) => {
             console.error("Error:", error);
             alert("Error submitting vote. Please try again.");
+
             // Re-enable cards if there's an error
             voteInProgress = false;
             cards.forEach((c) => {
-              c.classList.remove("disabled");
+              c.classList.remove("disabled", "card-unselected", "card-clicked");
               c.style.pointerEvents = "auto";
             });
           });
