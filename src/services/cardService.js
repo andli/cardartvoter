@@ -94,3 +94,15 @@ exports.getCardPair = async () => {
 exports.getCardByScryfallId = async (scryfallId) => {
   return await Card.findOne({ scryfallId }).lean();
 };
+
+// Add this function
+
+exports.getTotalCardCount = async () => {
+  try {
+    const count = await Card.countDocuments({ enabled: true });
+    return count;
+  } catch (error) {
+    console.error("Error getting card count:", error);
+    throw error; // Let the middleware handle the error
+  }
+};
