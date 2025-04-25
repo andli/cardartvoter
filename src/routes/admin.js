@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { importSetWithRateLimiting } = require("../admin/importCards");
+const Card = require("../models/Card"); // Add this line to import the Card model
 
 // Simple admin auth middleware
 const adminAuth = (req, res, next) => {
