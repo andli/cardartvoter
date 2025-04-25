@@ -14,7 +14,6 @@
                   <th scope="col" style="width: 50px" class="text-center">#</th>
                   <th scope="col">Card</th>
                   <th scope="col" class="text-end">Rating</th>
-                  <th scope="col" class="text-end">Votes</th>
                 </tr>
               </thead>
               <tbody>
@@ -46,7 +45,6 @@
                   <td class="text-end align-middle">
                     <%= card.formattedRating %>
                   </td>
-                  <td class="text-end align-middle"><%= card.comparisons %></td>
                 </tr>
                 <% }) %>
               </tbody>
@@ -70,7 +68,6 @@
                   <th scope="col" class="text-center" style="width: 50px">#</th>
                   <th scope="col">Artist</th>
                   <th scope="col" class="text-end">Avg. Rating</th>
-                  <th scope="col" class="text-center">Cards</th>
                 </tr>
               </thead>
               <tbody>
@@ -89,42 +86,23 @@
                         onerror="this.onerror=null; this.src='/api/card-back-thumb';"
                       />
                       <% } %>
-
-                      <div>
-                        <div class="fw-medium">
-                          <a
-                            href="https://scryfall.com/search?q=a%3A%22<%= encodeURIComponent(artist.name) %>%22&unique=art"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="text-inherit"
-                            style="text-decoration: none; color: inherit"
-                          >
-                            <%= artist.name || 'Unknown' %>
-                          </a>
-                        </div>
-                        <small class="text-muted">
-                          Notable: <% if (artist.notableScryfallId) { %>
-                          <!-- Link to Scryfall if we have an ID -->
-                          <a
-                            href="https://scryfall.com/card/<%= artist.notableScryfallId %>"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            ><%= artist.bestCard %></a
-                          >
-                          <% } else { %> <%= artist.bestCard %> <% } %>
-                        </small>
+                      <div class="fw-medium">
+                        <a
+                          href="https://scryfall.com/search?q=a%3A%22<%= encodeURIComponent(artist.name) %>%22&unique=art"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-inherit"
+                        >
+                          <%= artist.name || 'Unknown' %>
+                        </a>
                       </div>
                     </div>
                   </td>
                   <td class="text-end align-middle">
-                    <%= artist.formattedRating ||
-                    artist.averageRating.toLocaleString() %>
-                  </td>
-                  <td class="text-center align-middle">
-                    <%= artist.totalCards %>
+                    <%= artist.averageRating.toFixed(0) %>
                   </td>
                 </tr>
-                <% }) %>
+                <% }); %>
               </tbody>
             </table>
           </div>
