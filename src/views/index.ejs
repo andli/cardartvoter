@@ -3,7 +3,6 @@
     <!-- Voting section -->
     <div class="col-lg-8 order-1 order-lg-1">
       <% if (hasCards) { %>
-      <h1 class="h4 mb-3">Which card art do you prefer?</h1>
       <p class="text-muted mb-4">
         Click on the card with the artwork you find most appealing.
       </p>
@@ -11,7 +10,7 @@
       <div
         class="d-flex flex-column flex-sm-row justify-content-center align-items-center"
       >
-        <div class="voting-container mb-4 mb-sm-0 mx-auto mx-sm-2">
+        <div class="voting-container mb-4 mb-sm-4 mb-0">
           <%- include('components/card', {card: cards[0]}) %>
         </div>
 

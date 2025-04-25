@@ -169,6 +169,11 @@ footer {
   .vs-badge {
     font-size: 3rem;
   }
+
+  .voting-container {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
 }
 
 /* Desktop/tablet adjustments */
