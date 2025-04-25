@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { importCardsWithRateLimiting } = require("../admin/importCards");
+const { importSetWithRateLimiting } = require("../admin/importCards");
 
 // Simple admin auth middleware
 const adminAuth = (req, res, next) => {
@@ -10,18 +10,24 @@ const adminAuth = (req, res, next) => {
   res.status(401).json({ error: "Unauthorized" });
 };
 
-// Admin route to trigger card import
-router.post("/import-cards", adminAuth, async (req, res) => {
+// Modified route to import cards by set (works within serverless limits)
+router.post("/import-set", adminAuth, async (req, res) => {
   try {
-    // Use the correct function name and pass a query parameter
-    const query = req.body.query || req.query.query || "is:booster -is:digital";
+    const setCode = req.body.set || req.query.set;
 
-    console.log(`Starting import with query: ${query}`);
-    const added = await importCardsWithRateLimiting(query);
+    if (!setCode) {
+      return res.status(400).json({
+        success: false,
+        message: "Set code is required (e.g. ?set=woe for Wilds of Eldraine)",
+      });
+    }
+
+    console.log(`Starting import for set: ${setCode}`);
+    const added = await importSetWithRateLimiting(setCode);
 
     res.json({
       success: true,
-      message: `Import completed successfully: ${added} new cards added`,
+      message: `Successfully imported ${added} cards from set ${setCode}`,
       added,
     });
   } catch (error) {
@@ -32,6 +38,15 @@ router.post("/import-cards", adminAuth, async (req, res) => {
       error: error.message,
     });
   }
+});
+
+// Keep the original route for local development only
+router.post("/import-cards", adminAuth, async (req, res) => {
+  res.json({
+    success: false,
+    message:
+      "Bulk import is disabled on Vercel due to serverless function limitations. Please use /admin/import-set?set=CODE instead.",
+  });
 });
 
 // Test route to check if admin route is working
