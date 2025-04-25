@@ -11,7 +11,8 @@
         class="d-flex flex-column flex-sm-row justify-content-center align-items-center"
       >
         <div class="voting-container mb-4 mb-sm-4 mb-0">
-          <%- include('components/card', {card: cards[0]}) %>
+          <%- include('components/card', {card: cards[0], pairId:
+          locals.pairId}) %>
         </div>
 
         <!-- VS Badge -->
@@ -22,7 +23,8 @@
         </div>
 
         <div class="voting-container mx-auto mx-sm-2">
-          <%- include('components/card', {card: cards[1]}) %>
+          <%- include('components/card', {card: cards[1], pairId:
+          locals.pairId}) %>
         </div>
       </div>
       <% } else { %>
@@ -111,7 +113,6 @@
         });
 
         const cardId = this.dataset.cardId;
-        console.log("Card clicked, ID:", cardId);
 
         if (!cardId) {
           console.error("Missing card ID on clicked element:", this);
@@ -127,8 +128,6 @@
             break;
           }
         }
-
-        console.log("Other card ID:", otherCardId);
 
         if (!otherCardId) {
           console.error("Could not find other card ID");
@@ -152,7 +151,6 @@
 
           if (response.ok) {
             const result = await response.json();
-            console.log("Vote successful:", result);
 
             // Show rating change animation with arrow
             const ratingChange = result.winner.change;

@@ -1,19 +1,26 @@
-<div class="voting-container mb-4 mb-sm-0 mx-auto mx-sm-2">
-  <!-- Debug - remove this in production -->
-  <!-- Card data: <%= JSON.stringify({name: card.name, id: card.scryfallId}) %> -->
-
-  <div class="card voting-card" data-card-id="<%= card.scryfallId %>">
+<div class="card voting-card" data-card-id="<%= card.scryfallId %>">
+  <div class="card-img-container">
     <img
       src="<%= card.imageUrl %>"
       alt="<%= card.name %>"
-      class="card-img-top"
-      onerror="this.onerror=null; this.src='/img/card-back.jpg';"
+      class="card-img"
+      loading="eager"
+      onerror="this.onerror=null; this.src='/api/card-back';"
     />
-    <div class="card-body">
-      <h5 class="card-title text-center text-sm-start"><%= card.name %></h5>
-      <p class="card-text mb-1 text-center text-sm-start">
-        <i class="fas fa-paint-brush me-1"></i> <%= card.artist %>
-      </p>
-    </div>
+  </div>
+  <div class="card-info">
+    <div class="card-title"><%= card.name %></div>
+    <div class="card-artist">Art by <%= card.artist %></div>
   </div>
 </div>
+
+<!-- Keep your form if you're using it for security -->
+<form
+  id="voteForm-<%= card.scryfallId %>"
+  method="POST"
+  action="/vote"
+  style="display: none"
+>
+  <input type="hidden" name="selectedCardId" value="<%= card.scryfallId %>" />
+  <input type="hidden" name="pairId" value="<%= pairId %>" />
+</form>

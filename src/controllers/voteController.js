@@ -8,36 +8,40 @@ class VoteController {
     const { cardId, selectedCardId } = req.body;
 
     try {
-      // Validate that these cards were actually served to the user
-      if (!req.session.currentPair) {
-        return res.status(400).json({ error: "No active voting session" });
+      // Log the request data and session for debugging
+      console.log("Vote request:", { cardId, selectedCardId });
+      console.log("Session pair:", req.session?.currentPair);
+
+      // Strict validation
+      if (!req.session || !req.session.currentPair) {
+        console.warn("Vote attempt with no active session");
+        return res.status(403).json({ error: "Invalid voting session" });
       }
 
       const { card1, card2, timestamp } = req.session.currentPair;
 
-      // Validate the card pair
+      // CRITICAL: Exact string matching for the IDs
       const validPair =
         (selectedCardId === card1 && cardId === card2) ||
         (selectedCardId === card2 && cardId === card1);
 
       if (!validPair) {
         console.warn(
-          `Invalid vote attempt: user tried to vote for ${selectedCardId} vs ${cardId}, but was shown ${card1} vs ${card2}`
+          `SECURITY ALERT: Invalid vote attempt. Got ${selectedCardId} vs ${cardId}, expected ${card1} vs ${card2}`
         );
-        return res
-          .status(400)
-          .json({ error: "Don't be a cheater. Invalid card pair." });
+        return res.status(403).json({ error: "Invalid card pair" });
       }
 
-      // Validate timestamp (prevent votes on stale pairs)
+      // Prevent old session reuse
       const now = Date.now();
-      if (now - timestamp > 3600000) {
-        // 1 hour expiration
-        return res.status(400).json({ error: "Voting session expired" });
+      if (now - timestamp > 300000) {
+        // 5 minutes expiration
+        return res.status(403).json({ error: "Voting session expired" });
       }
 
-      // Clear the current pair to prevent duplicate votes
+      // Clear the pair to prevent reuse
       req.session.currentPair = null;
+      await new Promise((resolve) => req.session.save(resolve));
 
       // Record the vote
       await this.voteService.recordVote(cardId, selectedCardId);
