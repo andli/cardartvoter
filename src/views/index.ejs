@@ -17,13 +17,15 @@
   <body>
     <%- include('components/header') %>
 
-    <div class="container py-4">
-      <div class="row gx-5">
+    <div class="container py-3 py-md-4">
+      <div class="row gy-4">
         <!-- Voting section -->
-        <div class="col-lg-8">
+        <div class="col-lg-8 order-1 order-lg-1">
           <% if (cards && cards.length >= 2) { %>
-          <div class="d-flex flex-column flex-md-row align-items-center">
-            <div class="voting-container mx-auto mx-md-2 mb-4">
+          <div
+            class="d-flex flex-column flex-sm-row justify-content-center align-items-center"
+          >
+            <div class="voting-container mb-4 mb-sm-0 mx-auto mx-sm-2">
               <div class="card voting-card" data-card-id="<%= cards[0].id %>">
                 <img
                   src="<%= cards[0].imageUrl %>"
@@ -31,36 +33,43 @@
                   class="card-img-top"
                 />
                 <div class="card-body">
-                  <h5 class="card-title"><%= cards[0].name %></h5>
-                  <p class="card-text mb-1">Artist: <%= cards[0].artist %></p>
+                  <h5 class="card-title text-center text-sm-start">
+                    <%= cards[0].name %>
+                  </h5>
+                  <p class="card-text mb-1 text-center text-sm-start">
+                    Artist: <%= cards[0].artist %>
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div class="voting-container mx-auto mx-md-2 mb-4">
-              <div
-                class="card voting-card h-100"
-                data-card-id="<%= cards[1].id %>"
-              >
+            <div class="voting-container mx-auto mx-sm-2">
+              <div class="card voting-card" data-card-id="<%= cards[1].id %>">
                 <img
                   src="<%= cards[1].imageUrl %>"
                   alt="<%= cards[1].name %>"
                   class="card-img-top"
                 />
                 <div class="card-body">
-                  <h5 class="card-title"><%= cards[1].name %></h5>
-                  <p class="card-text mb-1">Artist: <%= cards[1].artist %></p>
+                  <h5 class="card-title text-center text-sm-start">
+                    <%= cards[1].name %>
+                  </h5>
+                  <p class="card-text mb-1 text-center text-sm-start">
+                    Artist: <%= cards[1].artist %>
+                  </p>
                 </div>
               </div>
             </div>
           </div>
           <% } %>
 
-          <p class="text-center mt-1">Click the card you like best</p>
+          <p class="text-center mt-3 mt-sm-4 mb-0">
+            Click the card you like best
+          </p>
         </div>
 
         <!-- Rankings section -->
-        <div class="rankings col-lg-4 ps-0">
+        <div class="rankings col-lg-4 order-2 order-lg-2 mb-lg-0 mx-3 mx-lg-0">
           <div class="card">
             <div class="card-header">
               <h2 class="h5 mb-0">Top 10 Cards</h2>

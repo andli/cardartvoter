@@ -8,8 +8,6 @@
 
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 body {
@@ -43,26 +41,6 @@ header {
   font-weight: 700;
 }
 
-header nav ul {
-  display: flex;
-  list-style: none;
-}
-
-header nav ul li {
-  margin-left: 20px;
-}
-
-header nav ul li a {
-  color: white;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s ease;
-}
-
-header nav ul li a:hover {
-  color: var(--secondary-color);
-}
-
 /* App container layout */
 .app-container {
   padding: 15px;
@@ -85,6 +63,7 @@ header nav ul li a:hover {
 }
 
 .card {
+  margin: 10px;
   cursor: pointer;
   background-color: white;
   border-radius: 10px;
@@ -174,6 +153,10 @@ footer {
 
 /* Desktop */
 @media screen and (min-width: 1024px) {
+  .card {
+    margin: 0px;
+  }
+
   .app-container {
     display: grid;
     grid-template-columns: 2fr 1fr;
