@@ -58,7 +58,7 @@
       </div>
     </div>
 
-    <!-- Top 20 Artists -->
+    <!-- Top 20 Artists Section -->
     <div class="col-lg-6">
       <div class="card shadow-sm">
         <div class="card-header bg-light">
@@ -80,13 +80,39 @@
                 <tr>
                   <td class="text-center align-middle"><%= index + 1 %></td>
                   <td>
-                    <div class="fw-medium"><%= artist.name || 'Unknown' %></div>
-                    <small class="text-muted"
-                      >Notable: <%= artist.bestCard %></small
-                    >
+                    <div class="d-flex align-items-center">
+                      <!-- Add thumbnail if available -->
+                      <% if (artist.notableScryfallId) { %>
+                      <img
+                        src="<%= getArtCropUrl(artist.notableScryfallId) %>"
+                        alt="Art by <%= artist.name %>"
+                        class="me-2 rounded"
+                        style="width: 40px; height: 40px; object-fit: cover"
+                        onerror="this.onerror=null; this.src='/api/card-back-thumb';"
+                      />
+                      <% } %>
+
+                      <div>
+                        <div class="fw-medium">
+                          <%= artist.name || 'Unknown' %>
+                        </div>
+                        <small class="text-muted">
+                          Notable: <% if (artist.notableScryfallId) { %>
+                          <!-- Link to Scryfall if we have an ID -->
+                          <a
+                            href="https://scryfall.com/card/<%= artist.notableScryfallId %>"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            ><%= artist.bestCard %></a
+                          >
+                          <% } else { %> <%= artist.bestCard %> <% } %>
+                        </small>
+                      </div>
+                    </div>
                   </td>
                   <td class="text-end align-middle">
-                    <%= artist.formattedRating %>
+                    <%= artist.formattedRating ||
+                    artist.averageRating.toLocaleString() %>
                   </td>
                   <td class="text-center align-middle">
                     <%= artist.totalCards %>
