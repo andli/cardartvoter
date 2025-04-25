@@ -26,7 +26,6 @@ body {
 
 header {
   background-color: var(--primary-color);
-  padding: 15px 0;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -303,4 +302,13 @@ footer {
 .rankings-section .list-group-item img:hover {
   transform: scale(1.5);
   z-index: 10;
+}
+
+/* Add this to your existing styles */
+.card-header h2,
+.rankings h2,
+.card-header .h5 {
+  font-family: "Crimson Text", serif;
+  font-weight: 600;
+  letter-spacing: 0.4px;
 }
