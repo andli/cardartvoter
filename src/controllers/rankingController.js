@@ -7,18 +7,23 @@ exports.displayRankings = async (req, res) => {
     // Get top cards
     const topCards = await rankingService.getTopRankedCards(20);
 
-    // Get bottom cards - add this line
+    // Get bottom cards
     const bottomCards = await rankingService.getBottomRankedCards(20);
 
     // Get top artists
     const topArtists = await rankingService.getTopRankedArtists(20);
 
+    // Get bottom artists - add this line
+    const bottomArtists = await rankingService.getBottomRankedArtists(20);
+
     res.render("rankings", {
       title: "Card Art Rankings",
       topCards,
-      bottomCards, // Add this line
+      bottomCards,
       topArtists,
+      bottomArtists, // Add this line
       getArtCropUrl: imageHelpers.getArtCropUrl,
+      getCardUrl: imageHelpers.getCardUrl,
     });
   } catch (error) {
     console.error("Error getting rankings:", error);

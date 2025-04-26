@@ -32,10 +32,6 @@ const statsService = {
       const lastUpdated = new Date(stat.lastUpdated).getTime();
 
       if (force || now - lastUpdated > REFRESH_THRESHOLD) {
-        console.log(
-          `${force ? "Forced refresh" : "Refreshing stale count"} for ${key}...`
-        );
-
         // Get fresh count
         const freshValue = await countFn();
 

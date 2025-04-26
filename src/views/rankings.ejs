@@ -1,4 +1,7 @@
 <div class="container py-4">
+  <div class="row">
+    <p>Please be patient and keep voting while the Elo rating builds up.</p>
+  </div>
   <div class="row gy-4">
     <!-- Top 20 Cards -->
     <div class="col-lg-4">
@@ -208,13 +211,100 @@
               </tbody>
             </table>
           </div>
+          <div class="alert alert-info m-4">
+            <i class="bi bi-info-circle me-2"></i> Rankings are based on
+            head-to-head voting. Artists need at least 5 cards to appear in the
+            rankings.
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="alert alert-info mt-4">
-    <i class="bi bi-info-circle me-2"></i> Rankings are based on head-to-head
-    voting. Artists need at least 3 cards to appear in the rankings.
+  <!-- New row for Bottom 20 Artists -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-light">
+          <h2 class="h5 mb-0">Bottom 20 Artists</h2>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+              <thead>
+                <tr>
+                  <th scope="col" class="text-center" style="width: 50px">#</th>
+                  <th scope="col">Artist</th>
+                  <th scope="col" class="text-end">Avg. Rating</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% bottomArtists.forEach((artist, index) => { %>
+                <tr>
+                  <td class="text-center align-middle"><%= index + 1 %></td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <!-- Add thumbnail if available -->
+                      <% if (artist.notableScryfallId) { %>
+                      <div class="card-thumbnail-container me-2">
+                        <img
+                          src="<%= getArtCropUrl(artist.notableScryfallId) %>"
+                          alt="Art by <%= artist.name %>"
+                          class="rounded card-thumbnail"
+                          style="width: 40px; height: 40px; object-fit: cover"
+                          onerror="this.onerror=null; this.src='/api/card-back-thumb';"
+                        />
+                        <!-- Full card preview -->
+                        <img
+                          src="<%= getCardUrl(artist.notableScryfallId) %>"
+                          alt="Card by <%= artist.name %>"
+                          class="card-full-preview"
+                          loading="lazy"
+                        />
+                      </div>
+                      <% } %>
+                      <div class="fw-medium">
+                        <a
+                          href="https://scryfall.com/search?q=a%3A%22<%= encodeURIComponent(artist.name) %>%22&unique=art"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-inherit"
+                        >
+                          <%= artist.name || 'Unknown' %>
+                        </a>
+                      </div>
+                    </div>
+                    <div>
+                      <% if (artist.notableCardName) { %>
+                      <div class="text-muted small">
+                        Notable:
+                        <a
+                          href="https://scryfall.com/card/<%= artist.notableScryfallId %>"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-muted"
+                        >
+                          <%= artist.notableCardName %>
+                        </a>
+                      </div>
+                      <% } %>
+                    </div>
+                  </td>
+                  <td class="text-end align-middle">
+                    <%= artist.averageRating.toFixed(0) %>
+                  </td>
+                </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+          <div class="alert alert-info m-4">
+            <i class="bi bi-info-circle me-2"></i> Rankings are based on
+            head-to-head voting. Artists need at least 5 cards to appear in the
+            rankings.
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
