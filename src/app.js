@@ -43,7 +43,7 @@ app.use(
 );
 
 // Import routes
-const indexRouter = require("./routes/index");
+const indexRouter = require("./routes/home");
 const apiRouter = require("./routes/api");
 const adminRouter = require("./routes/admin");
 

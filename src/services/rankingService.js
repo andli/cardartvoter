@@ -1,71 +1,119 @@
 const Card = require("../models/Card");
+const mongoose = require("mongoose");
 
 /**
  * Get top ranked cards
  */
-exports.getTopRankings = async (limit = 10, minComparisons = 5) => {
+exports.getTopRankedCards = async (limit = 20, minComparisons = 1) => {
   try {
-    const topRankings = await Card.find({
-      enabled: true,
-      comparisons: { $gte: minComparisons },
-    })
-      .sort({ rating: -1 })
+    const cards = await Card.find({ comparisons: { $gte: minComparisons } })
+      .sort({ rating: -1 }) // Descending order (highest first)
       .limit(limit)
       .lean();
 
-    return topRankings;
+    return cards.map((card) => ({
+      ...card,
+      formattedRating: card.rating.toFixed(0),
+    }));
   } catch (error) {
-    console.error("Error fetching top rankings:", error);
+    console.error("Error getting top ranked cards:", error);
     return [];
   }
 };
 
 /**
- * Get top artists based on average card ratings
+ * Get bottom ranked cards
  */
-exports.getTopArtists = async (limit = 20, minCards = 3) => {
+exports.getBottomRankedCards = async (limit = 20, minComparisons = 1) => {
   try {
-    const topArtists = await Card.aggregate([
-      { $match: { enabled: true } },
+    const cards = await Card.find({ comparisons: { $gte: minComparisons } })
+      .sort({ rating: 1 }) // Ascending order (lowest first)
+      .limit(limit)
+      .lean();
+
+    return cards.map((card) => ({
+      ...card,
+      formattedRating: card.rating.toFixed(0),
+    }));
+  } catch (error) {
+    console.error("Error getting bottom ranked cards:", error);
+    return [];
+  }
+};
+
+/**
+ * Get top ranked artists
+ */
+exports.getTopRankedArtists = async (limit = 20, minCards = 1) => {
+  try {
+    // Aggregate to get average rating by artist
+    const artists = await Card.aggregate([
+      // Filter cards with comparisons
+      { $match: { comparisons: { $gt: 0 } } },
+
       // Group by artist and calculate stats
       {
         $group: {
           _id: "$artist",
           averageRating: { $avg: "$rating" },
-          totalCards: { $sum: 1 },
-          totalComparisons: { $sum: "$comparisons" },
-          bestCard: { $max: "$name" }, // Just to have a representative card
+          cardCount: { $sum: 1 },
+          cards: { $push: "$$ROOT" },
         },
       },
+
       // Filter artists with at least minCards cards
-      { $match: { totalCards: { $gte: minCards } } },
-      // Sort by average rating descending
+      {
+        $match: {
+          cardCount: { $gte: minCards },
+          _id: { $ne: null, $ne: "" },
+        },
+      },
+
+      // Sort by average rating
       { $sort: { averageRating: -1 } },
-      // Limit to requested number
+
+      // Limit results
       { $limit: limit },
-      // Project to rename fields
+
+      // Format output
       {
         $project: {
           _id: 0,
           name: "$_id",
           averageRating: 1,
-          totalCards: 1,
-          totalComparisons: 1,
-          bestCard: 1,
+          cardCount: 1,
+          // Get a notable card's ID for thumbnail
+          notableScryfallId: {
+            $arrayElemAt: ["$cards.scryfallId", 0],
+          },
+          // Also get the notable card's name
+          notableCardName: {
+            $arrayElemAt: ["$cards.name", 0],
+          },
         },
       },
     ]);
 
-    // Format the ratings
-    topArtists.forEach((artist) => {
-      artist.formattedRating = artist.averageRating.toLocaleString(undefined, {
-        maximumFractionDigits: 0,
-      });
-    });
-
-    return topArtists;
+    return artists;
   } catch (error) {
-    console.error("Error fetching top artists:", error);
+    console.error("Error getting top ranked artists:", error);
+    return [];
+  }
+};
+
+/**
+ * Get top rankings for the homepage
+ * (Returns only top cards for the homepage widget)
+ */
+exports.getTopRankings = async (limit = 10) => {
+  try {
+    // Get top cards with a low minimum comparisons threshold for homepage
+    const topCards = await exports.getTopRankedCards(limit, 1);
+
+    // Return just the array of cards, not an object
+    return topCards;
+  } catch (error) {
+    console.error("Error getting top rankings:", error);
     return [];
   }
 };
