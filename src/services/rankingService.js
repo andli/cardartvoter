@@ -46,18 +46,17 @@ exports.getBottomRankedCards = async (limit = 20, minComparisons = 1) => {
  */
 exports.getTopRankedArtists = async (limit = 20, minCards = 1) => {
   try {
-    // Aggregate to get average rating by artist
-    const artists = await Card.aggregate([
+    // First, get top artists without storing all card data
+    const artistStats = await Card.aggregate([
       // Filter cards with comparisons
       { $match: { comparisons: { $gt: 0 } } },
 
-      // Group by artist and calculate stats
+      // Group by artist but don't store all cards
       {
         $group: {
           _id: "$artist",
           averageRating: { $avg: "$rating" },
           cardCount: { $sum: 1 },
-          cards: { $push: "$$ROOT" },
         },
       },
 
@@ -74,25 +73,26 @@ exports.getTopRankedArtists = async (limit = 20, minCards = 1) => {
 
       // Limit results
       { $limit: limit },
-
-      // Format output
-      {
-        $project: {
-          _id: 0,
-          name: "$_id",
-          averageRating: 1,
-          cardCount: 1,
-          // Get a notable card's ID for thumbnail
-          notableScryfallId: {
-            $arrayElemAt: ["$cards.scryfallId", 0],
-          },
-          // Also get the notable card's name
-          notableCardName: {
-            $arrayElemAt: ["$cards.name", 0],
-          },
-        },
-      },
     ]);
+
+    // Now get a notable card for each artist in a separate query
+    const artists = await Promise.all(
+      artistStats.map(async (artist) => {
+        // Find one notable card for this artist
+        const notableCard = await Card.findOne(
+          { artist: artist._id, comparisons: { $gt: 0 } },
+          { name: 1, scryfallId: 1 }
+        ).sort({ rating: -1 });
+
+        return {
+          name: artist._id,
+          averageRating: artist.averageRating,
+          cardCount: artist.cardCount,
+          notableScryfallId: notableCard?.scryfallId || null,
+          notableCardName: notableCard?.name || null,
+        };
+      })
+    );
 
     return artists;
   } catch (error) {

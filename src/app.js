@@ -95,3 +95,9 @@ app.response.render = async function (view, options, callback) {
     return originalRender.call(this, view, options, callback);
   }
 };
+
+// Add this with your other static middleware
+app.use(
+  "/favicon.ico",
+  express.static(path.join(__dirname, "public", "images", "favicon.ico"))
+);

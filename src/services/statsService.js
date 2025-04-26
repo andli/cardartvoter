@@ -38,7 +38,6 @@ const statsService = {
 
         // Get fresh count
         const freshValue = await countFn();
-        console.log(`New count for ${key}: ${freshValue}`);
 
         // Update the stat with new count and timestamp
         await Stats.updateOne(
@@ -70,7 +69,6 @@ const statsService = {
         try {
           // Use the directly imported model
           const count = await Card.countDocuments();
-          console.log(`Counted ${count} cards`);
           return count;
         } catch (error) {
           console.error("Error counting cards:", error);
@@ -103,11 +101,6 @@ const statsService = {
           const voteCount =
             result.length > 0 ? Math.floor(result[0].totalComparisons / 2) : 0;
 
-          console.log(
-            `Calculated ${voteCount} votes from ${
-              result.length > 0 ? result[0].totalComparisons : 0
-            } total comparisons`
-          );
           return voteCount;
         } catch (error) {
           console.error("Error counting votes via comparisons:", error);
