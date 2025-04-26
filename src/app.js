@@ -70,6 +70,7 @@ const imageHelpers = require("./utils/imageHelpers");
 // Make helper functions available in all templates
 app.locals.getArtCropUrl = imageHelpers.getArtCropUrl;
 app.locals.getSmallCardUrl = imageHelpers.getSmallCardUrl;
+app.locals.getCardUrl = imageHelpers.getCardUrl;
 
 const statsService = require("./services/statsService");
 
