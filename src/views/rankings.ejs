@@ -21,26 +21,38 @@
                 <tr>
                   <td class="text-center align-middle"><%= index + 1 %></td>
                   <td>
-                    <a
-                      href="https://scryfall.com/card/<%= card.scryfallId %>"
-                      class="d-flex align-items-center text-decoration-none"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <img
-                        src="<%= getArtCropUrl(card.scryfallId) %>"
-                        alt="<%= card.name %>"
-                        class="me-2 rounded"
-                        style="width: 40px; height: 40px; object-fit: cover"
-                        onerror="this.onerror=null; this.src='/api/card-back-thumb';"
-                      />
+                    <div class="d-flex align-items-center">
+                      <div class="card-thumbnail-container me-2">
+                        <img
+                          src="<%= getArtCropUrl(card.scryfallId) %>"
+                          alt="<%= card.name %>"
+                          class="rounded card-thumbnail"
+                          style="width: 40px; height: 40px; object-fit: cover"
+                          onerror="this.onerror=null; this.src='/api/card-back-thumb';"
+                        />
+                        <!-- Full card preview -->
+                        <img
+                          src="<%= getSmallCardUrl(card.scryfallId) %>"
+                          alt="<%= card.name %>"
+                          class="card-full-preview"
+                          loading="lazy"
+                        />
+                      </div>
                       <div>
-                        <div class="fw-medium text-dark"><%= card.name %></div>
+                        <div class="fw-medium">
+                          <a
+                            href="https://scryfall.com/card/<%= card.scryfallId %>"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <%= card.name %>
+                          </a>
+                        </div>
                         <small class="text-muted"
                           ><%= card.artist || 'Unknown artist' %></small
                         >
                       </div>
-                    </a>
+                    </div>
                   </td>
                   <td class="text-end align-middle">
                     <%= card.formattedRating %>
@@ -75,26 +87,38 @@
                 <tr>
                   <td class="text-center align-middle"><%= index + 1 %></td>
                   <td>
-                    <a
-                      href="https://scryfall.com/card/<%= card.scryfallId %>"
-                      class="d-flex align-items-center text-decoration-none"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <img
-                        src="<%= getArtCropUrl(card.scryfallId) %>"
-                        alt="<%= card.name %>"
-                        class="me-2 rounded"
-                        style="width: 40px; height: 40px; object-fit: cover"
-                        onerror="this.onerror=null; this.src='/api/card-back-thumb';"
-                      />
+                    <div class="d-flex align-items-center">
+                      <div class="card-thumbnail-container me-2">
+                        <img
+                          src="<%= getArtCropUrl(card.scryfallId) %>"
+                          alt="<%= card.name %>"
+                          class="rounded card-thumbnail"
+                          style="width: 40px; height: 40px; object-fit: cover"
+                          onerror="this.onerror=null; this.src='/api/card-back-thumb';"
+                        />
+                        <!-- Full card preview -->
+                        <img
+                          src="<%= getSmallCardUrl(card.scryfallId) %>"
+                          alt="<%= card.name %>"
+                          class="card-full-preview"
+                          loading="lazy"
+                        />
+                      </div>
                       <div>
-                        <div class="fw-medium text-dark"><%= card.name %></div>
+                        <div class="fw-medium">
+                          <a
+                            href="https://scryfall.com/card/<%= card.scryfallId %>"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <%= card.name %>
+                          </a>
+                        </div>
                         <small class="text-muted"
                           ><%= card.artist || 'Unknown artist' %></small
                         >
                       </div>
-                    </a>
+                    </div>
                   </td>
                   <td class="text-end align-middle">
                     <%= card.formattedRating %>
@@ -132,13 +156,22 @@
                     <div class="d-flex align-items-center">
                       <!-- Add thumbnail if available -->
                       <% if (artist.notableScryfallId) { %>
-                      <img
-                        src="<%= getArtCropUrl(artist.notableScryfallId) %>"
-                        alt="Art by <%= artist.name %>"
-                        class="me-2 rounded"
-                        style="width: 40px; height: 40px; object-fit: cover"
-                        onerror="this.onerror=null; this.src='/api/card-back-thumb';"
-                      />
+                      <div class="card-thumbnail-container me-2">
+                        <img
+                          src="<%= getArtCropUrl(artist.notableScryfallId) %>"
+                          alt="Art by <%= artist.name %>"
+                          class="rounded card-thumbnail"
+                          style="width: 40px; height: 40px; object-fit: cover"
+                          onerror="this.onerror=null; this.src='/api/card-back-thumb';"
+                        />
+                        <!-- Full card preview -->
+                        <img
+                          src="<%= getSmallCardUrl(artist.notableScryfallId) %>"
+                          alt="Card by <%= artist.name %>"
+                          class="card-full-preview"
+                          loading="lazy"
+                        />
+                      </div>
                       <% } %>
                       <div class="fw-medium">
                         <a

@@ -57,14 +57,21 @@
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <img
-                  src="<%= getArtCropUrl(card.scryfallId) %>"
-                  alt="<%= card.name %>"
-                  class="ms-2 me-2 rounded"
-                  style="width: 40px; height: 40px; object-fit: cover"
-                  onerror="this.onerror=null; this.src='/api/card-back-thumb';"
-                />
-
+                <div class="card-thumbnail-container">
+                  <img
+                    src="<%= getArtCropUrl(card.scryfallId) %>"
+                    alt="<%= card.name %>"
+                    class="ms-2 me-2 rounded"
+                    style="width: 40px; height: 40px; object-fit: cover"
+                    onerror="this.onerror=null; this.src='/api/card-back-thumb';"
+                  />
+                  <img
+                    src="<%= getSmallCardUrl(card.scryfallId) %>"
+                    alt="<%= card.name %>"
+                    class="card-full-preview"
+                    loading="lazy"
+                  />
+                </div>
                 <div class="flex-grow-1">
                   <div
                     class="fw-medium text-start text-dark"
