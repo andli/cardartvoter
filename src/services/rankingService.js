@@ -44,7 +44,7 @@ exports.getBottomRankedCards = async (limit = 20, minComparisons = 1) => {
 /**
  * Get top ranked artists
  */
-exports.getTopRankedArtists = async (limit = 20, minCards = 10) => {
+exports.getTopRankedArtists = async (limit = 20, minCards = 5) => {
   try {
     // First, get top artists without storing all card data
     const artistStats = await Card.aggregate([
@@ -105,7 +105,7 @@ exports.getTopRankedArtists = async (limit = 20, minCards = 10) => {
 /**
  * Get bottom ranked artists
  */
-exports.getBottomRankedArtists = async (limit = 20, minCards = 10) => {
+exports.getBottomRankedArtists = async (limit = 20, minCards = 5) => {
   try {
     // First, get bottom artists without storing all card data
     const artistStats = await Card.aggregate([
