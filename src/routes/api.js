@@ -11,51 +11,123 @@ router.get("/cards/pair", async (req, res) => {
       return res.status(404).json({ message: "Not enough cards available" });
     }
 
-    // Occasionally choose a completely random pair (10% of the time)
-    if (Math.random() < 0.1) {
+    // First decide what type of pairing to do
+    const randomValue = Math.random();
+
+    // 10% of the time - completely random pairing (unchanged)
+    if (randomValue < 0.1) {
       const randomCards = await Card.aggregate([
         { $match: { enabled: true } },
         { $sample: { size: 2 } },
       ]);
-
       return res.json(randomCards);
     }
 
-    // Choose a card that has fewer comparisons
-    const lessSeenCard = await Card.findOne({ enabled: true })
-      .sort({ comparisons: 1, _id: 1 })
-      .skip(Math.floor(Math.random() * 20)); // Some randomization
+    // 15% of the time - extreme rating pairing to test rating boundaries
+    else if (randomValue < 0.25) {
+      // Get cards with min requirements (5+ comparisons)
+      const minComparisons = 5;
 
-    if (!lessSeenCard) {
-      return res.status(500).json({ message: "Error finding card" });
+      // Decide which extreme pairing pattern to use
+      const extremeType = Math.floor(Math.random() * 3);
+
+      if (extremeType === 0) {
+        // Pair two high-rated cards against each other
+        const highCards = await Card.find({
+          enabled: true,
+          comparisons: { $gte: minComparisons },
+        })
+          .sort({ rating: -1 }) // Highest ratings first
+          .limit(20) // Get top 20
+          .lean();
+
+        // Select 2 random cards from this high-rated pool
+        const highPair = [
+          highCards[Math.floor(Math.random() * Math.min(highCards.length, 10))],
+          highCards[
+            Math.floor(Math.random() * Math.min(highCards.length, 10)) + 10
+          ],
+        ];
+
+        return res.json(highPair);
+      } else if (extremeType === 1) {
+        // Pair two low-rated cards against each other
+        const lowCards = await Card.find({
+          enabled: true,
+          comparisons: { $gte: minComparisons },
+        })
+          .sort({ rating: 1 }) // Lowest ratings first
+          .limit(20) // Get bottom 20
+          .lean();
+
+        // Select 2 random cards from this low-rated pool
+        const lowPair = [
+          lowCards[Math.floor(Math.random() * Math.min(lowCards.length, 10))],
+          lowCards[
+            Math.floor(Math.random() * Math.min(lowCards.length, 10)) + 10
+          ],
+        ];
+
+        return res.json(lowPair);
+      } else {
+        // Pair a high-rated card against a low-rated card
+        const highCard = await Card.findOne({
+          enabled: true,
+          comparisons: { $gte: minComparisons },
+        })
+          .sort({ rating: -1 }) // Highest rating
+          .skip(Math.floor(Math.random() * 10));
+
+        const lowCard = await Card.findOne({
+          enabled: true,
+          _id: { $ne: highCard._id }, // Ensure we don't pick the same card
+          comparisons: { $gte: minComparisons },
+        })
+          .sort({ rating: 1 }) // Lowest rating
+          .skip(Math.floor(Math.random() * 10));
+
+        return res.json([highCard, lowCard]);
+      }
     }
 
-    // Find another card with similar rating (within ~200 points)
-    const rating = lessSeenCard.rating;
-    const ratingMin = rating - 200;
-    const ratingMax = rating + 200;
+    // 75% of the time - use existing logic for selecting cards with fewer comparisons
+    else {
+      // Choose a card that has fewer comparisons (your existing code)
+      const lessSeenCard = await Card.findOne({ enabled: true })
+        .sort({ comparisons: 1, _id: 1 })
+        .skip(Math.floor(Math.random() * 20)); // Some randomization
 
-    const secondCard = await Card.findOne({
-      _id: { $ne: lessSeenCard._id },
-      enabled: true,
-      rating: { $gte: ratingMin, $lte: ratingMax },
-    }).skip(Math.floor(Math.random() * 10));
-
-    // Fallback to a more different card if we couldn't find one close in rating
-    if (!secondCard) {
-      const fallbackCard = await Card.findOne({
-        _id: { $ne: lessSeenCard._id },
-        enabled: true,
-      }).skip(Math.floor(Math.random() * 50));
-
-      if (!fallbackCard) {
-        return res.status(500).json({ message: "Error finding second card" });
+      if (!lessSeenCard) {
+        return res.status(500).json({ message: "Error finding card" });
       }
 
-      return res.json([lessSeenCard, fallbackCard]);
-    }
+      // Find another card with similar rating (within ~200 points)
+      const rating = lessSeenCard.rating;
+      const ratingMin = rating - 200;
+      const ratingMax = rating + 200;
 
-    return res.json([lessSeenCard, secondCard]);
+      const secondCard = await Card.findOne({
+        _id: { $ne: lessSeenCard._id },
+        enabled: true,
+        rating: { $gte: ratingMin, $lte: ratingMax },
+      }).skip(Math.floor(Math.random() * 10));
+
+      // Fallback to a more different card if we couldn't find one close in rating
+      if (!secondCard) {
+        const fallbackCard = await Card.findOne({
+          _id: { $ne: lessSeenCard._id },
+          enabled: true,
+        }).skip(Math.floor(Math.random() * 50));
+
+        if (!fallbackCard) {
+          return res.status(500).json({ message: "Error finding second card" });
+        }
+
+        return res.json([lessSeenCard, fallbackCard]);
+      }
+
+      return res.json([lessSeenCard, secondCard]);
+    }
   } catch (error) {
     console.error("Error fetching card pair:", error);
     res.status(500).json({ message: "Server error" });
