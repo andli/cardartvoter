@@ -16,7 +16,6 @@ Card art and data like unique id numbers for cards will be fetched from the Scry
 
 - Ranking trends up/down
 - List most most popular red cards, etc etc on the Rankings page
-- Error loading card art handling; display a message and load a new pair
 - Handle double sided cards
 - Filter out weird cards and tokens(?)
 - For generic names like "Mountain", add a gatherer ID
