@@ -297,43 +297,95 @@ exports.getBottomArtists = async (limit = 10) => {
 // Add these new functions for set rankings
 
 exports.getTopSets = async (limit = 10) => {
-  // Step 1: Get all distinct set names first (lightweight)
-  const distinctSets = await Card.distinct("setName", {
-    enabled: true,
-    setName: { $exists: true, $ne: null },
-  });
+  // Get global average for Bayesian calculation (optional)
+  const globalStats = await Card.aggregate([
+    { $match: { enabled: true } },
+    {
+      $group: { _id: null, avgRating: { $avg: "$rating" }, count: { $sum: 1 } },
+    },
+  ]).then((res) => res[0] || { avgRating: 1500, count: 0 });
 
-  // Step 2: Process each set individually
-  const setsData = [];
-  for (const setName of distinctSets) {
-    // Get average rating for this set
-    const cardsInSet = await Card.find({
-      setName: setName,
-      enabled: true,
-    }).select("rating");
+  // Use a single aggregation pipeline instead of multiple queries
+  const sets = await Card.aggregate(
+    [
+      // Filter enabled cards
+      { $match: { enabled: true, setName: { $exists: true, $ne: null } } },
 
-    if (cardsInSet.length >= 5) {
-      // Min threshold
-      const avgRating =
-        cardsInSet.reduce((sum, card) => sum + card.rating, 0) /
-        cardsInSet.length;
-      const setCode = await Card.findOne({ setName }).select("set");
+      // Group by setName to get stats
+      {
+        $group: {
+          _id: "$setName",
+          name: { $first: "$setName" },
+          code: { $first: "$set" },
+          avgRating: { $avg: "$rating" },
+          cardCount: { $sum: 1 },
+        },
+      },
 
-      setsData.push({
-        name: setName,
-        code: setCode?.set,
-        cardCount: cardsInSet.length,
-        averageRating: avgRating,
-      });
-    }
-  }
+      // Filter sets with at least 5 cards
+      { $match: { cardCount: { $gte: 5 } } },
 
-  // Sort and limit in application memory
-  return setsData
-    .sort((a, b) => b.averageRating - a.averageRating)
-    .slice(0, limit)
-    .map((set) => ({
-      ...set,
-      formattedRating: Math.round(set.averageRating).toString(),
-    }));
+      // Sort by average rating (descending)
+      { $sort: { avgRating: -1 } },
+
+      // Limit to requested number
+      { $limit: limit },
+    ],
+    { allowDiskUse: true }
+  );
+
+  // Format results
+  return sets.map((set) => ({
+    name: set.name,
+    code: set.code,
+    cardCount: set.cardCount,
+    averageRating: set.avgRating,
+    formattedRating: Math.round(set.avgRating).toString(),
+  }));
+};
+
+exports.getBottomSets = async (limit = 10) => {
+  // Use same approach but sort ascending
+  const sets = await Card.aggregate(
+    [
+      // Filter enabled cards with at least one vote
+      {
+        $match: {
+          enabled: true,
+          setName: { $exists: true, $ne: null },
+          comparisons: { $gt: 0 },
+        },
+      },
+
+      // Group by setName
+      {
+        $group: {
+          _id: "$setName",
+          name: { $first: "$setName" },
+          code: { $first: "$set" },
+          avgRating: { $avg: "$rating" },
+          cardCount: { $sum: 1 },
+        },
+      },
+
+      // Filter sets with at least 5 cards
+      { $match: { cardCount: { $gte: 5 } } },
+
+      // Sort by average rating (ascending for bottom sets)
+      { $sort: { avgRating: 1 } },
+
+      // Limit to requested number
+      { $limit: limit },
+    ],
+    { allowDiskUse: true }
+  );
+
+  // Format results
+  return sets.map((set) => ({
+    name: set.name,
+    code: set.code,
+    cardCount: set.cardCount,
+    averageRating: set.avgRating,
+    formattedRating: Math.round(set.avgRating).toString(),
+  }));
 };
