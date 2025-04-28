@@ -2,11 +2,22 @@
   <div class="row gy-4">
     <!-- Voting section -->
     <div class="col-lg-8 order-1 order-lg-1">
+      <div class="rotation-notice">
+        <div class="rotation-notice-content">
+          <i class="fas fa-mobile-alt fa-rotate-90 me-2"></i>
+          Turn your phone for a better experience
+          <button
+            type="button"
+            class="btn-close btn-sm ms-2"
+            aria-label="Close"
+          ></button>
+        </div>
+      </div>
       <% if (hasCards) { %>
-      <p class="text-muted mb-4 ms-2">
+      <div class="explanation-text">
         Click on the card with the artwork you find most appealing. The winner
         ranks up.
-      </p>
+      </div>
 
       <div
         class="d-flex flex-column flex-sm-row justify-content-center align-items-center"

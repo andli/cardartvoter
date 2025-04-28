@@ -14,7 +14,6 @@ Card art and data like unique id numbers for cards will be fetched from the Scry
 
 ## TODO:
 
-- A mobile UI that asks the user to turn the phone
 - Ranking trends up/down
 - List most most popular red cards, etc etc on the Rankings page
 - Error loading card art handling; display a message and load a new pair

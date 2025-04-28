@@ -418,3 +418,109 @@ a.text-muted:hover {
   text-decoration: underline;
   color: inherit;
 }
+
+.explanation-text {
+  color: var(--gray-color);
+  margin-left: 10px;
+}
+
+/* Mobile optimizations for navbar and explanation text */
+@media (max-width: 767.98px) {
+  /* Make navbar thinner */
+  .navbar {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    min-height: auto;
+  }
+
+  /* Smaller navbar brand */
+  .navbar-brand {
+    font-size: 1rem !important;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+
+  /* Reduce navbar toggler size */
+  .navbar-toggler {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  /* Make explanation text smaller */
+  .explanation-text {
+    font-size: 0.875rem;
+  }
+
+  /* Adjust container padding for better space usage */
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .voting-card .card-body .card-text {
+    font-size: 0.8rem;
+  }
+  .voting-card .card-body .card-title {
+    font-size: 0.6rem;
+  }
+
+  .voting-card .card-body {
+    padding: 8px;
+  }
+}
+
+/* Rotation notice for mobile devices in portrait mode */
+.rotation-notice {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(33, 37, 41, 0.85);
+  color: white;
+  padding: 8px 16px;
+  text-align: center;
+  font-size: 0.9rem;
+  z-index: 1050;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.rotation-notice-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Only show in portrait mode on mobile devices */
+@media (max-width: 767.98px) and (orientation: portrait) {
+  .rotation-notice {
+    display: block;
+  }
+
+  /* Don't show if user has dismissed it */
+  .rotation-notice.dismissed {
+    display: none;
+  }
+}
+
+/* Add animation for the rotation icon */
+.rotation-notice .fa-rotate-90 {
+  animation: wiggle 2s infinite;
+}
+
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(90deg);
+  }
+  25% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(90deg);
+  }
+  75% {
+    transform: rotate(180deg);
+  }
+}
