@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run prebuild && npm run build",
+  "buildCommand": "npm run build",
   "outputDirectory": "src/public",
   "regions": ["iad1"],
   "rewrites": [{ "source": "/(.*)", "destination": "src/app.js" }]
