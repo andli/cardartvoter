@@ -422,6 +422,7 @@ a.text-muted:hover {
 .explanation-text {
   color: var(--gray-color);
   margin-left: 10px;
+  margin-bottom: 1rem;
 }
 
 /* Mobile optimizations for navbar and explanation text */
