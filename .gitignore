@@ -19,6 +19,10 @@ build/
 public/bundle.js
 public/bundle.js.map
 
+# Set icons (downloaded during build)
+/public/images/set-icons/
+/src/public/images/set-icons/
+
 # Logs
 logs/
 *.log
