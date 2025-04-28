@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "prebuild": "node src/scripts/downloadSetIcons.js",
-    "build": "echo 'Build completed'",  // Changed from running the server
+    "build": "echo 'Build completed'", 
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "test": "jest"
