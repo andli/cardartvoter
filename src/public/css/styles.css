@@ -526,26 +526,54 @@ a.text-muted:hover {
   }
 }
 
-/* Only add if not already present */
-.voting-loading {
-  opacity: 0.7;
-  pointer-events: none;
-  transition: opacity 0.3s;
+/* REPLACE all animation-related CSS with these cleaner rules */
+
+/* Base transition settings for cards */
+.voting-container {
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+  will-change: opacity, transform;
 }
 
+/* Exit animation - slide down and fade out */
+.voting-container.exit {
+  opacity: 0;
+  transform: translateY(15px);
+  pointer-events: none;
+}
+
+/* Enter animation - start above and fade in */
+.voting-container.enter {
+  opacity: 0;
+  transform: translateY(-15px);
+  pointer-events: none;
+}
+
+/* Keep VS badge and explanation text normal */
+.voting-section.animating .explanation-text,
+.voting-section.animating .vs-badge-container {
+  opacity: 1 !important;
+}
+
+/* Fix VS badge to prevent any animation */
+.vs-badge-container {
+  transition: none !important;
+}
+
+/* Rating change animation */
 .vote-feedback {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.75);
   color: white;
-  font-size: 1.8rem;
   font-weight: bold;
   padding: 0.5rem 1rem;
   border-radius: 6px;
-  z-index: 10;
+  z-index: 100;
+  font-size: 1.5rem;
   opacity: 0;
+  pointer-events: none;
 }
 
 .vote-feedback.animate {
@@ -565,16 +593,31 @@ a.text-muted:hover {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.8);
   }
-  20% {
+  25% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1.1);
   }
-  80% {
+  75% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -60%) scale(0.9);
+    transform: translate(-50%, -50%) scale(0.9);
   }
+}
+
+/* Add this to your existing animation styles */
+
+/* Selected card highlight */
+.voting-card.selected {
+  box-shadow: 0 0 0 3px #4caf50, 0 0 15px rgba(76, 175, 80, 0.5);
+  transition: box-shadow 0.2s ease-out;
+  z-index: 10;
+  position: relative;
+}
+
+/* Make sure the transition is smooth */
+.voting-card {
+  transition: box-shadow 0.2s ease-out;
 }
