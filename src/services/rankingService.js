@@ -293,3 +293,131 @@ exports.getBottomArtists = async (limit = 10) => {
     averageRating: artist.bayesianRating,
   }));
 };
+
+// Add these new functions for set rankings
+
+exports.getTopSets = async (limit = 10) => {
+  // First get the global average rating
+  const globalAvg = await Card.aggregate([
+    { $match: { enabled: true } },
+    { $group: { _id: null, avgRating: { $avg: "$rating" } } },
+  ]).then((result) => result[0]?.avgRating || 1500);
+
+  // Weight constant - adjust based on your data
+  const C = 8;
+
+  // Get all sets with their ratings
+  const sets = await Card.aggregate([
+    { $match: { enabled: true, set: { $exists: true, $ne: null } } },
+    {
+      $group: {
+        _id: "$set",
+        name: { $first: "$setName" },
+        code: { $first: "$set" }, // Use 'set' field, output as 'code' for template
+        avgRating: { $avg: "$rating" },
+        cardCount: { $sum: 1 },
+        cards: {
+          $push: { id: "$scryfallId", name: "$name", rating: "$rating" },
+        },
+      },
+    },
+    {
+      $project: {
+        name: 1,
+        code: 1,
+        avgRating: 1,
+        cardCount: 1,
+        cards: 1,
+        // Calculate Bayesian average
+        bayesianRating: {
+          $divide: [
+            {
+              $add: [
+                { $multiply: [C, globalAvg] },
+                { $multiply: ["$avgRating", "$cardCount"] },
+              ],
+            },
+            { $add: [C, "$cardCount"] },
+          ],
+        },
+      },
+    },
+    // Only include sets with at least 5 cards for statistical significance
+    { $match: { cardCount: { $gte: 5 } } },
+    { $sort: { bayesianRating: -1 } },
+    { $limit: limit },
+  ]);
+
+  // Format the Bayesian rating for display
+  return sets.map((set) => ({
+    ...set,
+    formattedRating: set.bayesianRating.toFixed(0),
+    averageRating: set.bayesianRating,
+  }));
+};
+
+exports.getBottomSets = async (limit = 10) => {
+  // First get the global average rating
+  const globalAvg = await Card.aggregate([
+    { $match: { enabled: true } },
+    { $group: { _id: null, avgRating: { $avg: "$rating" } } },
+  ]).then((result) => result[0]?.avgRating || 1500);
+
+  // Weight constant - adjust based on your data
+  const C = 8;
+
+  // Get all sets with their ratings
+  const sets = await Card.aggregate([
+    {
+      $match: {
+        enabled: true,
+        comparisons: { $gt: 0 },
+        set: { $exists: true, $ne: null },
+      },
+    },
+    {
+      $group: {
+        _id: "$set",
+        name: { $first: "$setName" },
+        code: { $first: "$set" }, // Use 'set' field, output as 'code' for template
+        avgRating: { $avg: "$rating" },
+        cardCount: { $sum: 1 },
+        cards: {
+          $push: { id: "$scryfallId", name: "$name", rating: "$rating" },
+        },
+      },
+    },
+    {
+      $project: {
+        name: 1,
+        code: 1,
+        avgRating: 1,
+        cardCount: 1,
+        cards: 1,
+        // Calculate Bayesian average
+        bayesianRating: {
+          $divide: [
+            {
+              $add: [
+                { $multiply: [C, globalAvg] },
+                { $multiply: ["$avgRating", "$cardCount"] },
+              ],
+            },
+            { $add: [C, "$cardCount"] },
+          ],
+        },
+      },
+    },
+    // Only include sets with at least 5 cards for statistical significance
+    { $match: { cardCount: { $gte: 5 } } },
+    { $sort: { bayesianRating: 1 } },
+    { $limit: limit },
+  ]);
+
+  // Format the Bayesian rating for display
+  return sets.map((set) => ({
+    ...set,
+    formattedRating: set.bayesianRating.toFixed(0),
+    averageRating: set.bayesianRating,
+  }));
+};

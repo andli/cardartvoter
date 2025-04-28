@@ -299,5 +299,126 @@
         </div>
       </div>
     </div>
+
+    <!-- Top 10 Sets Section -->
+    <div class="col-lg-4 col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-light">
+          <h2 class="h5 mb-0">Top 10 Sets</h2>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+              <thead>
+                <tr>
+                  <th scope="col" class="text-center" style="width: 50px">#</th>
+                  <th scope="col">Set</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% topSets.forEach((set, index) => { %>
+                <tr>
+                  <td class="text-center align-middle"><%= index + 1 %></td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="set-icon-container me-2">
+                        <img
+                          src="<%= set.code ? `https://svgs.scryfall.io/sets/${set.code.toLowerCase()}.svg` : '/images/default-set-icon.svg' %>"
+                          alt="<%= set.name || 'Unknown Set' %>"
+                          class="rounded set-icon"
+                          style="width: 28px; height: 28px"
+                          onerror="this.src='/images/default-set-icon.svg';"
+                        />
+                      </div>
+                      <div>
+                        <div class="fw-medium">
+                          <% if (set.code) { %>
+                          <a
+                            href="https://scryfall.com/sets/<%= set.code.toLowerCase() %>"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <%= set.name || 'Unknown Set' %>
+                          </a>
+                          <% } else { %> <%= set.name || 'Unknown Set' %> <% }
+                          %>
+                        </div>
+                        <small class="text-muted"
+                          ><%= set.cardCount %> cards</small
+                        >
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom 10 Sets Section -->
+    <div class="col-lg-4 col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-light">
+          <h2 class="h5 mb-0">Bottom 10 Sets</h2>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+              <thead>
+                <tr>
+                  <th scope="col" class="text-center" style="width: 50px">#</th>
+                  <th scope="col">Set</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% bottomSets.forEach((set, index) => { %>
+                <tr>
+                  <td class="text-center align-middle"><%= index + 1 %></td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="set-icon-container me-2">
+                        <img
+                          src="<%= set.code ? `https://svgs.scryfall.io/sets/${set.code.toLowerCase()}.svg` : '/images/default-set-icon.svg' %>"
+                          alt="<%= set.name || 'Unknown Set' %>"
+                          class="rounded set-icon"
+                          style="width: 28px; height: 28px"
+                          onerror="this.src='/images/default-set-icon.svg';"
+                        />
+                      </div>
+                      <div>
+                        <div class="fw-medium">
+                          <% if (set.code) { %>
+                          <a
+                            href="https://scryfall.com/sets/<%= set.code.toLowerCase() %>"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <%= set.name || 'Unknown Set' %>
+                          </a>
+                          <% } else { %> <%= set.name || 'Unknown Set' %> <% }
+                          %>
+                        </div>
+                        <small class="text-muted"
+                          ><%= set.cardCount %> cards</small
+                        >
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+          <div class="alert alert-info m-4">
+            <i class="fa fa-info-circle me-2"></i> Set rankings use a Bayesian
+            average similar to artist rankings, providing a fair comparison
+            between sets with different numbers of cards.
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

@@ -13,15 +13,21 @@ exports.displayRankings = async (req, res) => {
     // Get top artists
     const topArtists = await rankingService.getTopRankedArtists(10);
 
-    // Get bottom artists - add this line
+    // Get bottom artists
     const bottomArtists = await rankingService.getBottomRankedArtists(10);
+
+    // Get top and bottom sets
+    const topSets = await rankingService.getTopSets(10);
+    const bottomSets = await rankingService.getBottomSets(10);
 
     res.render("rankings", {
       title: "Card Art Rankings",
       topCards,
       bottomCards,
       topArtists,
-      bottomArtists, // Add this line
+      bottomArtists,
+      topSets, // Add this
+      bottomSets, // Add this
       getArtCropUrl: imageHelpers.getArtCropUrl,
       getCardUrl: imageHelpers.getCardUrl,
     });
