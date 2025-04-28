@@ -33,6 +33,19 @@ Initial Rating: Start all cards at 1200 or 1500 points
 K-Factor: Use a higher K-factor (32-64) for new cards and lower (16-24) for established ones
 Confidence Tracking: Record the number of comparisons for each card
 
+## Most appreciated artist
+
+Trying out Bayesian Average Rating for artists:
+
+bayesianRating = (C × M + R × V) / (C + V)
+
+Where:
+
+- R = current average rating for the artist's cards
+- V = number of cards by the artist
+- M = global average rating across all cards
+- C = weight constant (typically 5-10)
+
 ### Card Selection Logic:
 
 - Prioritize showing cards with fewer comparisons

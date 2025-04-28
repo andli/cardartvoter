@@ -178,3 +178,118 @@ exports.getTopRankings = async (limit = 10) => {
     return [];
   }
 };
+
+exports.getTopArtists = async (limit = 10) => {
+  // First get the global average rating
+  const globalAvg = await Card.aggregate([
+    { $match: { enabled: true } },
+    { $group: { _id: null, avgRating: { $avg: "$rating" } } },
+  ]).then((result) => result[0]?.avgRating || 1500); // Default to 1500 if no cards
+
+  // Weight constant - adjust based on your data
+  const C = 8;
+
+  // Get all artists with their ratings
+  const artists = await Card.aggregate([
+    { $match: { enabled: true } },
+    {
+      $group: {
+        _id: "$artist",
+        avgRating: { $avg: "$rating" },
+        cardCount: { $sum: 1 },
+        cards: {
+          $push: { id: "$scryfallId", name: "$name", rating: "$rating" },
+        },
+      },
+    },
+    {
+      $project: {
+        artist: "$_id",
+        avgRating: 1,
+        cardCount: 1,
+        cards: 1,
+        // Calculate Bayesian average
+        bayesianRating: {
+          $divide: [
+            {
+              $add: [
+                { $multiply: [C, globalAvg] },
+                { $multiply: ["$avgRating", "$cardCount"] },
+              ],
+            },
+            { $add: [C, "$cardCount"] },
+          ],
+        },
+      },
+    },
+    { $sort: { bayesianRating: -1 } },
+    { $limit: limit },
+  ]);
+
+  // Format the Bayesian rating for display
+  return artists.map((artist) => ({
+    ...artist,
+    formattedRating: artist.bayesianRating.toFixed(0),
+    // Keep averageRating for backwards compatibility
+    averageRating: artist.bayesianRating,
+  }));
+};
+
+exports.getBottomArtists = async (limit = 10) => {
+  // First get the global average rating
+  const globalAvg = await Card.aggregate([
+    { $match: { enabled: true } },
+    { $group: { _id: null, avgRating: { $avg: "$rating" } } },
+  ]).then((result) => result[0]?.avgRating || 1500); // Default to 1500 if no cards
+
+  // Weight constant - adjust based on your data
+  const C = 8;
+
+  // Get all artists with their ratings
+  const artists = await Card.aggregate([
+    { $match: { enabled: true, comparisons: { $gt: 0 } } },
+    {
+      $group: {
+        _id: "$artist",
+        avgRating: { $avg: "$rating" },
+        cardCount: { $sum: 1 },
+        cards: {
+          $push: { id: "$scryfallId", name: "$name", rating: "$rating" },
+        },
+      },
+    },
+    {
+      $project: {
+        artist: "$_id",
+        avgRating: 1,
+        cardCount: 1,
+        cards: 1,
+        // Calculate Bayesian average
+        bayesianRating: {
+          $divide: [
+            {
+              $add: [
+                { $multiply: [C, globalAvg] },
+                { $multiply: ["$avgRating", "$cardCount"] },
+              ],
+            },
+            { $add: [C, "$cardCount"] },
+          ],
+        },
+      },
+    },
+    // Only include artists with at least 3 cards for statistical significance
+    { $match: { cardCount: { $gte: 3 } } },
+    // Sort by bayesianRating in ASCENDING order for bottom artists
+    { $sort: { bayesianRating: 1 } },
+    { $limit: limit },
+  ]);
+
+  // Format the Bayesian rating for display
+  return artists.map((artist) => ({
+    ...artist,
+    formattedRating: artist.bayesianRating.toFixed(0),
+    // Keep averageRating for backwards compatibility
+    averageRating: artist.bayesianRating,
+  }));
+};

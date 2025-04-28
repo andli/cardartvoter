@@ -8,13 +8,13 @@ exports.displayRankings = async (req, res) => {
     const topCards = await rankingService.getTopRankedCards(20);
 
     // Get bottom cards
-    const bottomCards = await rankingService.getBottomRankedCards(20);
+    const bottomCards = await rankingService.getBottomRankedCards(10);
 
     // Get top artists
-    const topArtists = await rankingService.getTopRankedArtists(20);
+    const topArtists = await rankingService.getTopRankedArtists(10);
 
     // Get bottom artists - add this line
-    const bottomArtists = await rankingService.getBottomRankedArtists(20);
+    const bottomArtists = await rankingService.getBottomRankedArtists(10);
 
     res.render("rankings", {
       title: "Card Art Rankings",
