@@ -90,9 +90,22 @@ document.addEventListener("DOMContentLoaded", function () {
       input.value = newPair.pairId;
     });
 
-    // Delay to allow exit animation to complete
-    setTimeout(() => {
-      // Update each card
+    // Preload images before showing them
+    const preloadPromises = cards.map((card) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(card);
+        img.onerror = () => {
+          console.error(`Failed to load image for ${card.name}`);
+          resolve(card); // Resolve anyway to continue the process
+        };
+        img.src = card.imageUrl;
+      });
+    });
+
+    // Wait for images to be preloaded
+    Promise.all(preloadPromises).then(() => {
+      // Now update the DOM content while cards are still hidden
       for (let i = 0; i < Math.min(containers.length, cards.length); i++) {
         const container = containers[i];
         const card = cards[i];
@@ -100,9 +113,9 @@ document.addEventListener("DOMContentLoaded", function () {
         // Update card data
         const cardElement = container.querySelector(".voting-card");
         cardElement.dataset.cardId = card.scryfallId;
-        cardElement.classList.remove("selected"); // Remove the selected class
+        cardElement.classList.remove("selected");
 
-        // Update image
+        // Update image - image is already cached now
         const img = container.querySelector(".card-img");
         img.src = card.imageUrl;
         img.alt = card.name;
@@ -116,23 +129,25 @@ document.addEventListener("DOMContentLoaded", function () {
         artistLink.textContent = card.artist;
       }
 
-      // After updating, add the enter class to prepare for animation
-      containers.forEach((container) => {
-        container.classList.add("enter");
-        container.classList.remove("exit");
-      });
-
-      // Force reflow
-      void document.body.offsetHeight;
-
-      // Use requestAnimationFrame for smoother animation timing
+      // Now start entrance animation only after images are loaded and DOM updated
       requestAnimationFrame(() => {
-        setTimeout(() => {
-          containers.forEach((container) =>
-            container.classList.remove("enter")
-          );
-        }, 20); // Shorter delay for more immediate response
+        containers.forEach((container) => {
+          container.classList.add("enter");
+          container.classList.remove("exit");
+        });
+
+        // Force reflow
+        void document.body.offsetHeight;
+
+        // Complete the animation
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            containers.forEach((container) =>
+              container.classList.remove("enter")
+            );
+          }, 20);
+        });
       });
-    }, 450);
+    });
   }
 });
