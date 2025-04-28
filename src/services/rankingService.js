@@ -298,57 +298,57 @@ exports.getBottomArtists = async (limit = 10) => {
 
 exports.getTopSets = async (limit = 10) => {
   // First get the global average rating
-  const globalAvg = await Card.aggregate([
-    { $match: { enabled: true } },
-    { $group: { _id: null, avgRating: { $avg: "$rating" } } },
-  ]).then((result) => result[0]?.avgRating || 1500);
+  const globalAvg = await Card.aggregate(
+    [
+      { $match: { enabled: true } },
+      { $group: { _id: null, avgRating: { $avg: "$rating" } } },
+    ],
+    { allowDiskUse: true }
+  ).then((result) => result[0]?.avgRating || 1500);
 
-  // Weight constant - adjust based on your data
+  // Weight constant
   const C = 8;
 
   // Get all sets with their ratings
-  const sets = await Card.aggregate([
-    { $match: { enabled: true, set: { $exists: true, $ne: null } } },
-    {
-      $group: {
-        _id: "$set",
-        name: { $first: "$setName" },
-        code: { $first: "$set" }, // Use 'set' field, output as 'code' for template
-        avgRating: { $avg: "$rating" },
-        cardCount: { $sum: 1 },
-        cards: {
-          $push: { id: "$scryfallId", name: "$name", rating: "$rating" },
+  const sets = await Card.aggregate(
+    [
+      { $match: { enabled: true, setName: { $exists: true, $ne: null } } },
+      {
+        $group: {
+          _id: "$setName",
+          name: { $first: "$setName" },
+          code: { $first: "$set" },
+          avgRating: { $avg: "$rating" },
+          cardCount: { $sum: 1 },
         },
       },
-    },
-    {
-      $project: {
-        name: 1,
-        code: 1,
-        avgRating: 1,
-        cardCount: 1,
-        cards: 1,
-        // Calculate Bayesian average
-        bayesianRating: {
-          $divide: [
-            {
-              $add: [
-                { $multiply: [C, globalAvg] },
-                { $multiply: ["$avgRating", "$cardCount"] },
-              ],
-            },
-            { $add: [C, "$cardCount"] },
-          ],
+      {
+        $project: {
+          name: 1,
+          code: 1,
+          avgRating: 1,
+          cardCount: 1,
+          bayesianRating: {
+            $divide: [
+              {
+                $add: [
+                  { $multiply: [C, globalAvg] },
+                  { $multiply: ["$avgRating", "$cardCount"] },
+                ],
+              },
+              { $add: [C, "$cardCount"] },
+            ],
+          },
         },
       },
-    },
-    // Only include sets with at least 5 cards for statistical significance
-    { $match: { cardCount: { $gte: 5 } } },
-    { $sort: { bayesianRating: -1 } },
-    { $limit: limit },
-  ]);
+      { $match: { cardCount: { $gte: 5 } } },
+      { $sort: { bayesianRating: -1 } },
+      { $limit: limit },
+    ],
+    { allowDiskUse: true }
+  );
 
-  // Format the Bayesian rating for display
+  // Format the rating
   return sets.map((set) => ({
     ...set,
     formattedRating: set.bayesianRating.toFixed(0),
@@ -358,63 +358,63 @@ exports.getTopSets = async (limit = 10) => {
 
 exports.getBottomSets = async (limit = 10) => {
   // First get the global average rating
-  const globalAvg = await Card.aggregate([
-    { $match: { enabled: true } },
-    { $group: { _id: null, avgRating: { $avg: "$rating" } } },
-  ]).then((result) => result[0]?.avgRating || 1500);
+  const globalAvg = await Card.aggregate(
+    [
+      { $match: { enabled: true } },
+      { $group: { _id: null, avgRating: { $avg: "$rating" } } },
+    ],
+    { allowDiskUse: true }
+  ).then((result) => result[0]?.avgRating || 1500);
 
   // Weight constant - adjust based on your data
   const C = 8;
 
   // Get all sets with their ratings
-  const sets = await Card.aggregate([
-    {
-      $match: {
-        enabled: true,
-        comparisons: { $gt: 0 },
-        set: { $exists: true, $ne: null },
-      },
-    },
-    {
-      $group: {
-        _id: "$set",
-        name: { $first: "$setName" },
-        code: { $first: "$set" }, // Use 'set' field, output as 'code' for template
-        avgRating: { $avg: "$rating" },
-        cardCount: { $sum: 1 },
-        cards: {
-          $push: { id: "$scryfallId", name: "$name", rating: "$rating" },
+  const sets = await Card.aggregate(
+    [
+      {
+        $match: {
+          enabled: true,
+          comparisons: { $gt: 0 },
+          set: { $exists: true, $ne: null },
         },
       },
-    },
-    {
-      $project: {
-        name: 1,
-        code: 1,
-        avgRating: 1,
-        cardCount: 1,
-        cards: 1,
-        // Calculate Bayesian average
-        bayesianRating: {
-          $divide: [
-            {
-              $add: [
-                { $multiply: [C, globalAvg] },
-                { $multiply: ["$avgRating", "$cardCount"] },
-              ],
-            },
-            { $add: [C, "$cardCount"] },
-          ],
+      {
+        $group: {
+          _id: "$set",
+          name: { $first: "$setName" },
+          code: { $first: "$set" },
+          avgRating: { $avg: "$rating" },
+          cardCount: { $sum: 1 },
         },
       },
-    },
-    // Only include sets with at least 5 cards for statistical significance
-    { $match: { cardCount: { $gte: 5 } } },
-    { $sort: { bayesianRating: 1 } },
-    { $limit: limit },
-  ]);
+      {
+        $project: {
+          name: 1,
+          code: 1,
+          avgRating: 1,
+          cardCount: 1,
+          bayesianRating: {
+            $divide: [
+              {
+                $add: [
+                  { $multiply: [C, globalAvg] },
+                  { $multiply: ["$avgRating", "$cardCount"] },
+                ],
+              },
+              { $add: [C, "$cardCount"] },
+            ],
+          },
+        },
+      },
+      { $match: { cardCount: { $gte: 5 } } },
+      { $sort: { bayesianRating: 1 } },
+      { $limit: limit },
+    ],
+    { allowDiskUse: true }
+  );
 
-  // Format the Bayesian rating for display
+  // Format the rating
   return sets.map((set) => ({
     ...set,
     formattedRating: set.bayesianRating.toFixed(0),
