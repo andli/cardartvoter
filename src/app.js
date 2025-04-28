@@ -34,7 +34,9 @@ app.use(
     secret:
       process.env.SESSION_SECRET || "secure-random-string-for-cardartvoter",
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
     },
     store: store,
     resave: false,

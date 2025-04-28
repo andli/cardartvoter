@@ -1,7 +1,7 @@
 <div class="container py-3 py-md-4">
   <div class="row gy-4">
     <!-- Voting section -->
-    <div class="col-lg-8 order-1 order-lg-1">
+    <div class="col-lg-8 order-1 order-lg-1 voting-section">
       <div class="rotation-notice">
         <div class="rotation-notice-content">
           <i class="fas fa-mobile-alt fa-rotate-90 me-2"></i>
@@ -101,87 +101,4 @@
     </div>
   </div>
 </div>
-
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // Get all voting cards
-    const cards = document.querySelectorAll(".voting-card");
-    let voteInProgress = false;
-
-    // Simple click handler for each card
-    cards.forEach((card) => {
-      card.addEventListener("click", function () {
-        // Prevent multiple clicks
-        if (voteInProgress) {
-          return;
-        }
-
-        voteInProgress = true;
-        const selectedCardId = this.dataset.cardId;
-
-        // INSTANT FEEDBACK - Apply immediately on click
-        this.classList.add("card-clicked");
-
-        // Find the other card
-        let otherCardId = null;
-        let otherCardElement = null;
-        cards.forEach((c) => {
-          if (c.dataset.cardId !== selectedCardId) {
-            otherCardId = c.dataset.cardId;
-            otherCardElement = c;
-            // Dim the unselected card instantly
-            c.classList.add("card-unselected");
-          }
-        });
-
-        // Visual feedback - disable all cards
-        cards.forEach((c) => {
-          c.classList.add("disabled");
-          c.style.pointerEvents = "none";
-        });
-
-        // Submit vote via API
-        fetch("/api/vote", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            selectedCardId: selectedCardId,
-            cardId: otherCardId,
-            pairId: "<%= locals.pairId %>",
-          }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            // Create and show arrow badges
-            const winnerBadge = document.createElement("div");
-            winnerBadge.className = "rating-badge winner";
-            winnerBadge.innerHTML = '<i class="fas fa-arrow-up"></i>';
-            this.appendChild(winnerBadge);
-
-            const loserBadge = document.createElement("div");
-            loserBadge.className = "rating-badge loser";
-            loserBadge.innerHTML = '<i class="fas fa-arrow-down"></i>';
-            otherCardElement.appendChild(loserBadge);
-
-            // Quick transition to next pair
-            setTimeout(() => {
-              window.location.href = "/";
-            }, 800); // Reduced from 1500ms to 800ms for snappier experience
-          })
-          .catch((error) => {
-            console.error("Error:", error);
-            alert("Error submitting vote. Please try again.");
-
-            // Re-enable cards if there's an error
-            voteInProgress = false;
-            cards.forEach((c) => {
-              c.classList.remove("disabled", "card-unselected", "card-clicked");
-              c.style.pointerEvents = "auto";
-            });
-          });
-      });
-    });
-  });
-</script>
+<script src="/js/voting.js"></script>

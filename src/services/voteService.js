@@ -1,28 +1,34 @@
-/**
- * Service to handle voting logic
- */
-class VoteService {
-  /**
-   * Records a vote between two cards
-   * @param {string} cardId - ID of the first card
-   * @param {string} selectedCardId - ID of the card that was selected/won
-   */
-  async recordVote(cardId, selectedCardId) {
-    // TODO: Implement actual vote recording logic with database
-    console.log(
-      `Vote recorded: Card ${selectedCardId} selected over ${cardId}`
-    );
-    return Promise.resolve();
-  }
+exports.processVote = async (selectedCardId, sessionPair) => {
+  try {
+    console.log("Processing vote:", { selectedCardId, sessionPair });
 
-  /**
-   * Gets aggregated vote results
-   * @returns {Promise<Array>} Vote statistics
-   */
-  async getVoteResults() {
-    // TODO: Implement actual results fetching from database
-    return Promise.resolve([]);
-  }
-}
+    // Get the two cards in the pair from the session
+    const card1Id = sessionPair.card1;
+    const card2Id = sessionPair.card2;
 
-module.exports = new VoteService();
+    if (!card1Id || !card2Id) {
+      throw new Error("Missing required card IDs");
+    }
+
+    // Determine which card was NOT selected
+    const otherCardId = selectedCardId === card1Id ? card2Id : card1Id;
+
+    console.log("Card comparison:", {
+      selectedCardId,
+      otherCardId,
+      card1Id,
+      card2Id,
+    });
+
+    // Rest of your vote processing logic...
+
+    // Return the result with a rating change
+    return {
+      selectedCard: selectedCardId,
+      ratingChange: 10, // Replace with actual rating change calculation
+    };
+  } catch (error) {
+    console.error("Error in processVote:", error);
+    throw error;
+  }
+};

@@ -65,16 +65,30 @@ router.get("/cards/pair", async (req, res) => {
 // Submit a vote between two cards
 router.post("/vote", async (req, res) => {
   try {
-    const { selectedCardId, cardId } = req.body;
+    const { selectedCardId, pairId } = req.body;
 
-    // Validate input
-    if (!selectedCardId || !cardId) {
-      return res.status(400).json({ message: "Missing required card IDs" });
+    // Update this validation to look for pairId instead of cardId
+    if (!selectedCardId || !pairId) {
+      return res.status(400).json({ message: "Missing required parameters" });
     }
 
-    // Use findOne with scryfallId instead of findById
+    // Also need to get the otherCardId from session
+    if (
+      !req.session.currentPair ||
+      !req.session.currentPair.card1 ||
+      !req.session.currentPair.card2
+    ) {
+      return res.status(400).json({ message: "Session data missing" });
+    }
+
+    // Determine which card was not selected
+    const card1Id = req.session.currentPair.card1;
+    const card2Id = req.session.currentPair.card2;
+    const otherCardId = selectedCardId === card1Id ? card2Id : card1Id;
+
+    // Use otherCardId instead of cardId
     const winningCard = await Card.findOne({ scryfallId: selectedCardId });
-    const losingCard = await Card.findOne({ scryfallId: cardId });
+    const losingCard = await Card.findOne({ scryfallId: otherCardId });
 
     if (!winningCard || !losingCard) {
       return res.status(404).json({
@@ -119,21 +133,45 @@ router.post("/vote", async (req, res) => {
     await winningCard.save();
     await losingCard.save();
 
-    // Return the rating changes
-    res.json({
-      winner: {
-        id: winningCard._id,
-        name: winningCard.name,
-        oldRating: oldWinnerRating,
-        newRating: winningCard.rating,
-        change: winningCard.rating - oldWinnerRating,
+    // Get a new card pair for the next round
+    const newPair = await Card.aggregate([
+      { $match: { enabled: true } },
+      { $sample: { size: 2 } },
+    ]);
+
+    // Generate a new pair ID
+    const newPairId = require("crypto").randomBytes(16).toString("hex");
+
+    // Store the new pair in session
+    req.session.currentPair = {
+      card1: newPair[0].scryfallId,
+      card2: newPair[1].scryfallId,
+      timestamp: Date.now(),
+      pairId: newPairId,
+    };
+
+    // Return ONE response with all the data
+    return res.json({
+      success: true,
+      result: {
+        winner: {
+          id: winningCard._id,
+          name: winningCard.name,
+          oldRating: oldWinnerRating,
+          newRating: winningCard.rating,
+          change: winningCard.rating - oldWinnerRating,
+        },
+        loser: {
+          id: losingCard._id,
+          name: losingCard.name,
+          oldRating: oldLoserRating,
+          newRating: losingCard.rating,
+          change: losingCard.rating - oldLoserRating,
+        },
       },
-      loser: {
-        id: losingCard._id,
-        name: losingCard.name,
-        oldRating: oldLoserRating,
-        newRating: losingCard.rating,
-        change: losingCard.rating - oldLoserRating,
+      newPair: {
+        cards: newPair,
+        pairId: newPairId,
       },
     });
   } catch (error) {
