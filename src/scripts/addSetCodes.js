@@ -18,7 +18,7 @@ if (!CONNECTION_STRING) {
     "❌ ERROR: Connection string is required. Please provide --uri=mongodb://..."
   );
   console.error(
-    "Example: node src/scripts/addSetCodes.js --uri=mongodb+srv://user:password@cluster.mongodb.net/dbname --dry-run"
+    "Example: node src/scripts/addSetCodes.js --uri=XXXXX --dry-run"
   );
   process.exit(1);
 }
