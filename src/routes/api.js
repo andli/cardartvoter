@@ -98,31 +98,32 @@ router.post("/vote", async (req, res) => {
       });
     }
 
-    // Determine K-factor based on number of comparisons
-    const getKFactor = (comparisons) => {
-      if (comparisons < 10) return 64; // New cards
-      if (comparisons < 30) return 32; // Establishing cards
-      if (comparisons < 100) return 24; // Established cards
+    // Determine K-factor based on combined comparison counts
+    const getKFactor = (winnerComps, loserComps) => {
+      const avgComps = (winnerComps + loserComps) / 2;
+      if (avgComps < 10) return 48; // New cards (reduced from 64)
+      if (avgComps < 30) return 32; // Establishing cards
+      if (avgComps < 100) return 24; // Established cards
       return 16; // Well-established cards
     };
 
-    const winnerK = getKFactor(winningCard.comparisons);
-    const loserK = getKFactor(losingCard.comparisons);
+    // Use a single K factor for both cards
+    const K = getKFactor(winningCard.comparisons, losingCard.comparisons);
 
-    // Calculate expected scores
-    const ratingDiff = losingCard.rating - winningCard.rating;
-    const expectedWinner = 1 / (1 + Math.pow(10, ratingDiff / 400));
-    const expectedLoser = 1 / (1 + Math.pow(10, -ratingDiff / 400));
+    // Calculate expected scores with simpler approach
+    const ratingDiff = winningCard.rating - losingCard.rating;
+    const expectedWinner = 1 / (1 + Math.pow(10, -ratingDiff / 400));
+    const expectedLoser = 1 - expectedWinner;
 
-    // Calculate new ratings
-    const oldWinnerRating = winningCard.rating;
-    const oldLoserRating = losingCard.rating;
-
-    winningCard.rating = Math.round(
-      winningCard.rating + winnerK * (1 - expectedWinner)
+    // Calculate new ratings using the same K
+    const ratingChange = Math.round(K * (1 - expectedWinner));
+    winningCard.rating = Math.max(
+      1000,
+      Math.min(2000, winningCard.rating + ratingChange)
     );
-    losingCard.rating = Math.round(
-      losingCard.rating + loserK * (0 - expectedLoser)
+    losingCard.rating = Math.max(
+      1000,
+      Math.min(2000, losingCard.rating - ratingChange)
     );
 
     // Track the number of comparisons
@@ -157,16 +158,16 @@ router.post("/vote", async (req, res) => {
         winner: {
           id: winningCard._id,
           name: winningCard.name,
-          oldRating: oldWinnerRating,
+          oldRating: winningCard.rating - ratingChange,
           newRating: winningCard.rating,
-          change: winningCard.rating - oldWinnerRating,
+          change: ratingChange,
         },
         loser: {
           id: losingCard._id,
           name: losingCard.name,
-          oldRating: oldLoserRating,
+          oldRating: losingCard.rating + ratingChange,
           newRating: losingCard.rating,
-          change: losingCard.rating - oldLoserRating,
+          change: -ratingChange,
         },
       },
       newPair: {
