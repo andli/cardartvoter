@@ -1,17 +1,8 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "src/app.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "src/app.js"
-    }
-  ],
   "buildCommand": "npm run prebuild && npm run build",
-  "regions": ["iad1"]
+  "outputDirectory": "public",
+  "framework": "node",
+  "regions": ["iad1"],
+  "rewrites": [{ "source": "/(.*)", "destination": "src/app.js" }]
 }
