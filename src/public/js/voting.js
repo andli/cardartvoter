@@ -1,28 +1,19 @@
 // This file contains client-side JavaScript for managing the voting process.
 
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("Voting script loaded");
   const votingContainer = document.querySelector(".voting-section");
 
   if (!votingContainer) {
-    console.warn("No voting section found on page");
     return;
   }
 
-  console.log("Voting container found, setting up event listeners");
-
   // Event delegation for card clicks
   votingContainer.addEventListener("click", async function (event) {
-    console.log("Click detected in voting container");
-
     // Find the clicked card
     const cardElement = event.target.closest(".voting-card");
     if (!cardElement) {
-      console.log("Click was not on a card element");
       return;
     }
-
-    console.log("Card clicked:", cardElement);
 
     // Prevent default action if it's a link or form
     event.preventDefault();
@@ -40,7 +31,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const pairId = pairIdElement.value;
-    console.log(`Voting for card ${cardId} with pair ID ${pairId}`);
 
     try {
       // Increase delay to 500ms (0.5s) to show the highlight longer
@@ -69,22 +59,14 @@ document.addEventListener("DOMContentLoaded", function () {
         }),
       });
 
-      console.log("Got response:", response);
-
       if (!response.ok) {
         throw new Error(`Network response was not ok: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("Response data:", data);
 
       if (data.success) {
-        console.log("Vote successful, showing feedback");
-        // Show brief feedback about the vote result
-        showVoteFeedback(cardId, data.result.ratingChange);
-
         // Update the cards with the new pair
-        console.log("Updating card pair with new data");
         setTimeout(() => updateCardPair(data.newPair), 800);
       } else {
         throw new Error(data.error || "Unknown error");
@@ -100,7 +82,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Update the DOM with new card data
   function updateCardPair(newPair) {
-    console.log("Updating card pair:", newPair);
     const cards = newPair.cards;
     const containers = document.querySelectorAll(".voting-container");
 
@@ -116,12 +97,10 @@ document.addEventListener("DOMContentLoaded", function () {
         const container = containers[i];
         const card = cards[i];
 
-        console.log(`Updating card ${i + 1}:`, card.name);
-
         // Update card data
         const cardElement = container.querySelector(".voting-card");
         cardElement.dataset.cardId = card.scryfallId;
-        cardElement.classList.remove("selected"); // IMPORTANT: Remove the selected class from the new cards
+        cardElement.classList.remove("selected"); // Remove the selected class
 
         // Update image
         const img = container.querySelector(".card-img");
@@ -154,30 +133,6 @@ document.addEventListener("DOMContentLoaded", function () {
           );
         }, 20); // Shorter delay for more immediate response
       });
-    }, 450); // Give more time for exit animation to complete
-  }
-
-  // Show feedback for the vote result
-  function showVoteFeedback(cardId, ratingChange) {
-    console.log("Showing vote feedback:", ratingChange);
-    const card = document.querySelector(
-      `.voting-card[data-card-id="${cardId}"]`
-    );
-    if (!card) return;
-
-    // Create a feedback element
-    const feedback = document.createElement("div");
-    feedback.className = "vote-feedback";
-    feedback.textContent = ratingChange > 0 ? `+${ratingChange}` : ratingChange;
-    feedback.classList.add(ratingChange > 0 ? "positive" : "negative");
-
-    // Add to the card
-    card.appendChild(feedback);
-
-    // Animate and remove after animation
-    setTimeout(() => {
-      feedback.classList.add("animate");
-      setTimeout(() => feedback.remove(), 750);
-    }, 50);
+    }, 450);
   }
 });
