@@ -297,127 +297,43 @@ exports.getBottomArtists = async (limit = 10) => {
 // Add these new functions for set rankings
 
 exports.getTopSets = async (limit = 10) => {
-  // First get the global average rating
-  const globalAvg = await Card.aggregate(
-    [
-      { $match: { enabled: true } },
-      { $group: { _id: null, avgRating: { $avg: "$rating" } } },
-    ],
-    { allowDiskUse: true }
-  ).then((result) => result[0]?.avgRating || 1500);
+  // Step 1: Get all distinct set names first (lightweight)
+  const distinctSets = await Card.distinct("setName", {
+    enabled: true,
+    setName: { $exists: true, $ne: null },
+  });
 
-  // Weight constant
-  const C = 8;
+  // Step 2: Process each set individually
+  const setsData = [];
+  for (const setName of distinctSets) {
+    // Get average rating for this set
+    const cardsInSet = await Card.find({
+      setName: setName,
+      enabled: true,
+    }).select("rating");
 
-  // Get all sets with their ratings
-  const sets = await Card.aggregate(
-    [
-      { $match: { enabled: true, setName: { $exists: true, $ne: null } } },
-      {
-        $group: {
-          _id: "$setName",
-          name: { $first: "$setName" },
-          code: { $first: "$set" },
-          avgRating: { $avg: "$rating" },
-          cardCount: { $sum: 1 },
-        },
-      },
-      {
-        $project: {
-          name: 1,
-          code: 1,
-          avgRating: 1,
-          cardCount: 1,
-          bayesianRating: {
-            $divide: [
-              {
-                $add: [
-                  { $multiply: [C, globalAvg] },
-                  { $multiply: ["$avgRating", "$cardCount"] },
-                ],
-              },
-              { $add: [C, "$cardCount"] },
-            ],
-          },
-        },
-      },
-      { $match: { cardCount: { $gte: 5 } } },
-      { $sort: { bayesianRating: -1 } },
-      { $limit: limit },
-    ],
-    { allowDiskUse: true }
-  );
+    if (cardsInSet.length >= 5) {
+      // Min threshold
+      const avgRating =
+        cardsInSet.reduce((sum, card) => sum + card.rating, 0) /
+        cardsInSet.length;
+      const setCode = await Card.findOne({ setName }).select("set");
 
-  // Format the rating
-  return sets.map((set) => ({
-    ...set,
-    formattedRating: set.bayesianRating.toFixed(0),
-    averageRating: set.bayesianRating,
-  }));
-};
+      setsData.push({
+        name: setName,
+        code: setCode?.set,
+        cardCount: cardsInSet.length,
+        averageRating: avgRating,
+      });
+    }
+  }
 
-exports.getBottomSets = async (limit = 10) => {
-  // First get the global average rating
-  const globalAvg = await Card.aggregate(
-    [
-      { $match: { enabled: true } },
-      { $group: { _id: null, avgRating: { $avg: "$rating" } } },
-    ],
-    { allowDiskUse: true }
-  ).then((result) => result[0]?.avgRating || 1500);
-
-  // Weight constant - adjust based on your data
-  const C = 8;
-
-  // Get all sets with their ratings
-  const sets = await Card.aggregate(
-    [
-      {
-        $match: {
-          enabled: true,
-          comparisons: { $gt: 0 },
-          set: { $exists: true, $ne: null },
-        },
-      },
-      {
-        $group: {
-          _id: "$set",
-          name: { $first: "$setName" },
-          code: { $first: "$set" },
-          avgRating: { $avg: "$rating" },
-          cardCount: { $sum: 1 },
-        },
-      },
-      {
-        $project: {
-          name: 1,
-          code: 1,
-          avgRating: 1,
-          cardCount: 1,
-          bayesianRating: {
-            $divide: [
-              {
-                $add: [
-                  { $multiply: [C, globalAvg] },
-                  { $multiply: ["$avgRating", "$cardCount"] },
-                ],
-              },
-              { $add: [C, "$cardCount"] },
-            ],
-          },
-        },
-      },
-      { $match: { cardCount: { $gte: 5 } } },
-      { $sort: { bayesianRating: 1 } },
-      { $limit: limit },
-    ],
-    { allowDiskUse: true }
-  );
-
-  // Format the rating
-  return sets.map((set) => ({
-    ...set,
-    formattedRating: set.bayesianRating.toFixed(0),
-    averageRating: set.bayesianRating,
-  }));
+  // Sort and limit in application memory
+  return setsData
+    .sort((a, b) => b.averageRating - a.averageRating)
+    .slice(0, limit)
+    .map((set) => ({
+      ...set,
+      formattedRating: Math.round(set.averageRating).toString(),
+    }));
 };
