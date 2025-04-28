@@ -15,13 +15,12 @@ Card art and data like unique id numbers for cards will be fetched from the Scry
 ## TODO:
 
 - A mobile UI that asks the user to turn the phone
-- Performant stats cache
-- For generic names like "Mountain", add a gatherer ID
+- Ranking trends up/down
+- List most most popular red cards, etc etc on the Rankings page
 - Error loading card art handling; display a message and load a new pair
 - Handle double sided cards
 - Filter out weird cards and tokens(?)
-- Add a page with live updating rankings events
-- List most most popular red cards, etc etc on the Rankings page
+- For generic names like "Mountain", add a gatherer ID
 
 ## Ranking algorithm
 

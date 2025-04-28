@@ -406,3 +406,15 @@ a.text-muted:hover {
 .card-thumbnail-container:hover .card-full-preview {
   display: block;
 }
+
+/* Artist link styling */
+.artist-link {
+  color: inherit;
+  text-decoration: none;
+  transition: text-decoration 0.2s ease;
+}
+
+.artist-link:hover {
+  text-decoration: underline;
+  color: inherit;
+}

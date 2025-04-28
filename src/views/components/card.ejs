@@ -11,7 +11,15 @@
   <div class="card-body">
     <h5 class="card-title text-center text-sm-start"><%= card.name %></h5>
     <p class="card-text text-center text-sm-start">
-      <i class="fas fa-paint-brush me-1"></i> <%= card.artist %>
+      <i class="fas fa-paint-brush me-1"></i>
+      <a
+        href="https://scryfall.com/search?q=a%3A%22<%= encodeURIComponent(card.artist) %>%22&order=usd&unique=art"
+        class="artist-link"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <%= card.artist %>
+      </a>
     </p>
   </div>
 </div>
