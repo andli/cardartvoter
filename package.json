@@ -5,6 +5,7 @@
   "main": "app.js",
   "scripts": {
     "prebuild": "node src/scripts/downloadSetIcons.js",
+    "build": "node src/app.js",
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "test": "jest"
