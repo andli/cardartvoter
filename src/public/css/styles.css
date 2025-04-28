@@ -477,7 +477,7 @@ a.text-muted:hover {
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: rgba(33, 37, 41, 0.85);
+  background-color: rgba(16, 192, 127, 0.744);
   color: white;
   padding: 8px 16px;
   text-align: center;
@@ -507,7 +507,7 @@ a.text-muted:hover {
 
 /* Add animation for the rotation icon */
 .rotation-notice .fa-rotate-90 {
-  animation: wiggle 2s infinite;
+  animation: wiggle 5s infinite;
 }
 
 @keyframes wiggle {
@@ -522,6 +522,6 @@ a.text-muted:hover {
     transform: rotate(90deg);
   }
   75% {
-    transform: rotate(180deg);
+    transform: rotate(0deg);
   }
 }
