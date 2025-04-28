@@ -8,7 +8,7 @@ exports.displayRankings = async (req, res) => {
     const topCards = await rankingService.getTopRankedCards(20);
 
     // Get bottom cards
-    const bottomCards = await rankingService.getBottomRankedCards(10);
+    const bottomCards = await rankingService.getBottomRankedCards(20);
 
     // Get top artists
     const topArtists = await rankingService.getTopRankedArtists(10);
