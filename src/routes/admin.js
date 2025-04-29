@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const { importSetWithRateLimiting } = require("../admin/importCards");
 const Card = require("../models/Card"); // Add this line to import the Card model
+const Set = require("../models/Set");
+const axios = require("axios");
 
 // Simple admin auth middleware
 const adminAuth = (req, res, next) => {
@@ -84,6 +86,89 @@ router.post("/refresh-stats", adminAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to refresh statistics",
+      error: error.message,
+    });
+  }
+});
+
+// Add this route to your existing admin.js file
+
+// Update sets data from Scryfall
+router.post("/update-sets", adminAuth, async (req, res) => {
+  try {
+    console.log("Admin request to update set data from Scryfall");
+
+    // Fetch set data from Scryfall
+    console.log("Fetching set data from Scryfall API...");
+    const response = await axios.get("https://api.scryfall.com/sets");
+    const sets = response.data.data;
+
+    console.log(`Found ${sets.length} sets from Scryfall`);
+
+    // Process each set
+    let created = 0;
+    let updated = 0;
+    let unchanged = 0;
+
+    for (const setData of sets) {
+      const {
+        code,
+        name,
+        set_type,
+        released_at,
+        card_count,
+        digital,
+        nonfoil_only,
+        foil_only,
+        icon_svg_uri,
+      } = setData;
+
+      // Calculate if this set should be filtered
+      // We filter out token sets, memorabilia, and promo sets
+      const shouldFilter = ["token", "memorabilia", "promo"].includes(set_type);
+
+      // Update or create
+      const result = await Set.updateOne(
+        { code: code.toLowerCase() },
+        {
+          code: code.toLowerCase(),
+          name,
+          set_type,
+          release_date: released_at,
+          card_count,
+          shouldFilter,
+          digital: digital || false,
+          nonfoil_only: nonfoil_only || false,
+          foil_only: foil_only || false,
+          icon_svg_uri,
+        },
+        { upsert: true }
+      );
+
+      if (result.upsertedCount) {
+        created++;
+      } else if (result.modifiedCount) {
+        updated++;
+      } else {
+        unchanged++;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Sets processed: ${created} created, ${updated} updated, ${unchanged} unchanged`,
+      stats: {
+        total: sets.length,
+        created,
+        updated,
+        unchanged,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating sets:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update sets",
       error: error.message,
     });
   }

@@ -1,4 +1,5 @@
 const Card = require("../models/Card");
+const Set = require("../models/Set"); // Add this import
 const mongoose = require("mongoose");
 
 /**
@@ -297,21 +298,44 @@ exports.getBottomArtists = async (limit = 10) => {
 // Add these new functions for set rankings
 
 exports.getTopSets = async (limit = 10) => {
-  // Get global average for Bayesian calculation (optional)
-  const globalStats = await Card.aggregate([
-    { $match: { enabled: true } },
-    {
-      $group: { _id: null, avgRating: { $avg: "$rating" }, count: { $sum: 1 } },
-    },
-  ]).then((res) => res[0] || { avgRating: 1500, count: 0 });
+  // Get valid set codes first (those that shouldn't be filtered out)
+  const validSets = await Set.find({ shouldFilter: false })
+    .select("code")
+    .lean();
 
-  // Use a single aggregation pipeline instead of multiple queries
+  const validSetCodes = validSets.map((set) => set.code);
+
+  const globalStats = await Card.aggregate(
+    [
+      {
+        $match: {
+          enabled: true,
+          set: { $in: validSetCodes }, // Only include valid sets
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          avgRating: { $avg: "$rating" },
+          count: { $sum: 1 },
+        },
+      },
+    ],
+    { allowDiskUse: true }
+  ).then((res) => res[0] || { avgRating: 1500, count: 0 });
+
   const sets = await Card.aggregate(
     [
-      // Filter enabled cards
-      { $match: { enabled: true, setName: { $exists: true, $ne: null } } },
+      // Filter enabled cards from valid sets
+      {
+        $match: {
+          enabled: true,
+          setName: { $exists: true, $ne: null },
+          set: { $in: validSetCodes }, // Only include valid sets
+        },
+      },
 
-      // Group by setName to get stats
+      // Rest of your existing aggregation
       {
         $group: {
           _id: "$setName",
@@ -321,27 +345,14 @@ exports.getTopSets = async (limit = 10) => {
           cardCount: { $sum: 1 },
         },
       },
-
-      // Filter sets with at least 5 cards
       { $match: { cardCount: { $gte: 5 } } },
-
-      // Sort by average rating (descending)
       { $sort: { avgRating: -1 } },
-
-      // Limit to requested number
       { $limit: limit },
     ],
     { allowDiskUse: true }
   );
 
-  // Format results
-  return sets.map((set) => ({
-    name: set.name,
-    code: set.code,
-    cardCount: set.cardCount,
-    averageRating: set.avgRating,
-    formattedRating: Math.round(set.avgRating).toString(),
-  }));
+  return sets;
 };
 
 exports.getBottomSets = async (limit = 10) => {
