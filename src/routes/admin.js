@@ -174,4 +174,40 @@ router.post("/update-sets", adminAuth, async (req, res) => {
   }
 });
 
+// Add this after your update-sets route
+
+// Check set filter data
+router.get("/check-set-filters", adminAuth, async (req, res) => {
+  try {
+    const regularSets = await Set.countDocuments({ shouldFilter: false });
+    const filteredSets = await Set.countDocuments({ shouldFilter: true });
+
+    const sampleRegularSets = await Set.find({ shouldFilter: false })
+      .sort({ name: 1 })
+      .limit(10)
+      .select("name set_type code");
+
+    const sampleFilteredSets = await Set.find({ shouldFilter: true })
+      .sort({ name: 1 })
+      .limit(10)
+      .select("name set_type code");
+
+    res.json({
+      counts: {
+        regularSets,
+        filteredSets,
+      },
+      samples: {
+        regularSets: sampleRegularSets,
+        filteredSets: sampleFilteredSets,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 module.exports = router;

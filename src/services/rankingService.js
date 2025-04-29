@@ -305,98 +305,66 @@ exports.getTopSets = async (limit = 10) => {
 
   const validSetCodes = validSets.map((set) => set.code);
 
-  const globalStats = await Card.aggregate(
-    [
-      {
-        $match: {
-          enabled: true,
-          set: { $in: validSetCodes }, // Only include valid sets
-        },
+  const sets = await Card.aggregate([
+    // Only include valid sets
+    {
+      $match: {
+        enabled: true,
+        set: { $in: validSetCodes },
+        setName: { $exists: true, $ne: null },
       },
-      {
-        $group: {
-          _id: null,
-          avgRating: { $avg: "$rating" },
-          count: { $sum: 1 },
-        },
-      },
-    ],
-    { allowDiskUse: true }
-  ).then((res) => res[0] || { avgRating: 1500, count: 0 });
+    },
 
-  const sets = await Card.aggregate(
-    [
-      // Filter enabled cards from valid sets
-      {
-        $match: {
-          enabled: true,
-          setName: { $exists: true, $ne: null },
-          set: { $in: validSetCodes }, // Only include valid sets
-        },
+    // Rest of your aggregation...
+    {
+      $group: {
+        _id: "$setName",
+        name: { $first: "$setName" },
+        code: { $first: "$set" },
+        avgRating: { $avg: "$rating" },
+        cardCount: { $sum: 1 },
       },
-
-      // Rest of your existing aggregation
-      {
-        $group: {
-          _id: "$setName",
-          name: { $first: "$setName" },
-          code: { $first: "$set" },
-          avgRating: { $avg: "$rating" },
-          cardCount: { $sum: 1 },
-        },
-      },
-      { $match: { cardCount: { $gte: 5 } } },
-      { $sort: { avgRating: -1 } },
-      { $limit: limit },
-    ],
-    { allowDiskUse: true }
-  );
+    },
+    { $match: { cardCount: { $gte: 5 } } },
+    { $sort: { avgRating: -1 } },
+    { $limit: limit },
+  ]);
 
   return sets;
 };
 
 exports.getBottomSets = async (limit = 10) => {
-  // Use same approach but sort ascending
-  const sets = await Card.aggregate(
-    [
-      // Filter enabled cards with at least one vote
-      {
-        $match: {
-          enabled: true,
-          setName: { $exists: true, $ne: null },
-          comparisons: { $gt: 0 },
-        },
+  // Get valid set codes first (those that shouldn't be filtered out)
+  const validSets = await Set.find({ shouldFilter: false })
+    .select("code")
+    .lean();
+
+  const validSetCodes = validSets.map((set) => set.code);
+
+  const sets = await Card.aggregate([
+    // Only include valid sets
+    {
+      $match: {
+        enabled: true,
+        set: { $in: validSetCodes },
+        setName: { $exists: true, $ne: null },
       },
+    },
 
-      // Group by setName
-      {
-        $group: {
-          _id: "$setName",
-          name: { $first: "$setName" },
-          code: { $first: "$set" },
-          avgRating: { $avg: "$rating" },
-          cardCount: { $sum: 1 },
-        },
+    // Rest of your aggregation...
+    {
+      $group: {
+        _id: "$setName",
+        name: { $first: "$setName" },
+        code: { $first: "$set" },
+        avgRating: { $avg: "$rating" },
+        cardCount: { $sum: 1 },
       },
+    },
+    { $match: { cardCount: { $gte: 5 } } },
+    { $sort: { avgRating: 1 } }, // Note: different sort order for bottom
+    { $limit: limit },
+  ]);
 
-      // Filter sets with at least 5 cards
-      { $match: { cardCount: { $gte: 5 } } },
-
-      // Sort by average rating (ascending for bottom sets)
-      { $sort: { avgRating: 1 } },
-
-      // Limit to requested number
-      { $limit: limit },
-    ],
-    { allowDiskUse: true }
-  );
-
-  // Format results
-  return sets.map((set) => ({
-    name: set.name,
-    code: set.code,
-    cardCount: set.cardCount,
-    averageRating: set.avgRating,
-    formattedRating: Math.round(set.avgRating).toString(),
-  }));
+  return sets;
 };
