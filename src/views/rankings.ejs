@@ -321,28 +321,16 @@
                   <td class="text-center align-middle"><%= index + 1 %></td>
                   <td>
                     <div class="d-flex align-items-center">
-                      <div class="set-icon-container me-2">
-                        <img
-                          src="<%= set.code ? `/images/set-icons/${set.code.toLowerCase()}.svg` : '/images/default-set-icon.svg' %>"
-                          alt="<%= set.name || 'Unknown Set' %>"
-                          class="rounded set-icon"
-                          style="width: 28px; height: 28px"
-                          onerror="this.src='/images/default-set-icon.svg';"
-                        />
-                      </div>
-                      <div>
-                        <div class="fw-medium">
-                          <% if (set.code) { %>
-                          <a
-                            href="https://scryfall.com/sets/<%= set.code.toLowerCase() %>"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <%= set.name || 'Unknown Set' %>
-                          </a>
-                          <% } else { %> <%= set.name || 'Unknown Set' %> <% }
-                          %>
-                        </div>
+                      <div class="fw-medium">
+                        <% if (set.code) { %>
+                        <a
+                          href="https://scryfall.com/sets/<%= set.code.toLowerCase() %>"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <%= set.name %>
+                        </a>
+                        <% } else { %> <%= set.name %> <% } %>
                       </div>
                     </div>
                   </td>
@@ -376,28 +364,16 @@
                   <td class="text-center align-middle"><%= index + 1 %></td>
                   <td>
                     <div class="d-flex align-items-center">
-                      <div class="set-icon-container me-2">
-                        <img
-                          src="<%= set.code ? `/images/set-icons/${set.code.toLowerCase()}.svg` : '/images/default-set-icon.svg' %>"
-                          alt="<%= set.name || 'Unknown Set' %>"
-                          class="rounded set-icon"
-                          style="width: 28px; height: 28px"
-                          onerror="this.src='/images/default-set-icon.svg';"
-                        />
-                      </div>
-                      <div>
-                        <div class="fw-medium">
-                          <% if (set.code) { %>
-                          <a
-                            href="https://scryfall.com/sets/<%= set.code.toLowerCase() %>"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <%= set.name || 'Unknown Set' %>
-                          </a>
-                          <% } else { %> <%= set.name || 'Unknown Set' %> <% }
-                          %>
-                        </div>
+                      <div class="fw-medium">
+                        <% if (set.code) { %>
+                        <a
+                          href="https://scryfall.com/sets/<%= set.code.toLowerCase() %>"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <%= set.name %>
+                        </a>
+                        <% } else { %> <%= set.name %> <% } %>
                       </div>
                     </div>
                   </td>
