@@ -124,14 +124,17 @@ router.post("/update-sets", adminAuth, async (req, res) => {
       } = setData;
 
       // Calculate if this set should be filtered
-      const shouldFilter = [
+      const filteredSetTypes = [
         "token",
         "memorabilia",
         "promo",
         "alchemy",
-        "digital",
         "minigame",
-      ].includes(set_type);
+      ];
+
+      // Filter out both specific set types AND any digital sets
+      const shouldFilter =
+        filteredSetTypes.includes(set_type) || digital === true;
 
       // Add to bulk operations array
       bulkOps.push({
