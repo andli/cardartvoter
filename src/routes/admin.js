@@ -106,11 +106,10 @@ router.post("/update-sets", adminAuth, async (req, res) => {
 
     console.log(`Found ${sets.length} sets from Scryfall`);
 
-    // Process each set
-    let created = 0;
-    let updated = 0;
-    let unchanged = 0;
+    // Prepare bulk operations
+    const bulkOps = [];
 
+    // Create operations for each set
     for (const setData of sets) {
       const {
         code,
@@ -125,50 +124,51 @@ router.post("/update-sets", adminAuth, async (req, res) => {
       } = setData;
 
       // Calculate if this set should be filtered
-      // We filter out token sets, memorabilia, and promo sets
-      const shouldFilter = [
-        "token",
-        "memorabilia",
-        "promo",
-        "alchemy",
-        "minigame",
-      ].includes(set_type);
+      const standardSetTypes = [
+        "core",
+        "expansion",
+        "masters",
+        "draft_innovation",
+        "commander",
+        "starter",
+      ];
+      const shouldFilter = !standardSetTypes.includes(set_type);
 
-      // Update or create
-      const result = await Set.updateOne(
-        { code: code.toLowerCase() },
-        {
-          code: code.toLowerCase(),
-          name,
-          set_type,
-          release_date: released_at,
-          card_count,
-          shouldFilter,
-          digital: digital || false,
-          nonfoil_only: nonfoil_only || false,
-          foil_only: foil_only || false,
-          icon_svg_uri,
+      // Add to bulk operations array
+      bulkOps.push({
+        updateOne: {
+          filter: { code: code.toLowerCase() },
+          update: {
+            $set: {
+              code: code.toLowerCase(),
+              name,
+              set_type,
+              release_date: released_at,
+              card_count,
+              shouldFilter,
+              digital: digital || false,
+              nonfoil_only: nonfoil_only || false,
+              foil_only: foil_only || false,
+              icon_svg_uri,
+            },
+          },
+          upsert: true,
         },
-        { upsert: true }
-      );
-
-      if (result.upsertedCount) {
-        created++;
-      } else if (result.modifiedCount) {
-        updated++;
-      } else {
-        unchanged++;
-      }
+      });
     }
+
+    // Execute all updates in a single database call!
+    console.log(`Executing bulk operation for ${bulkOps.length} sets`);
+    const result = await Set.bulkWrite(bulkOps);
 
     res.json({
       success: true,
-      message: `Sets processed: ${created} created, ${updated} updated, ${unchanged} unchanged`,
+      message: `Sets processed successfully`,
       stats: {
         total: sets.length,
-        created,
-        updated,
-        unchanged,
+        inserted: result.upsertedCount,
+        modified: result.modifiedCount,
+        matched: result.matchedCount,
       },
     });
   } catch (error) {
@@ -261,115 +261,6 @@ router.post("/download-set-icons", adminAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to download set icons",
-      error: error.message,
-    });
-  }
-});
-
-// Add this new batched update endpoint
-router.post("/update-sets-batched", adminAuth, async (req, res) => {
-  try {
-    console.log("Admin request to update set data in batches");
-
-    // Get parameters
-    const batchSize = parseInt(req.query.batchSize || "50");
-    const startIndex = parseInt(req.query.startIndex || "0");
-
-    // Fetch all sets from Scryfall (just once)
-    console.log("Fetching set data from Scryfall API...");
-    const response = await axios.get("https://api.scryfall.com/sets");
-    const allSets = response.data.data;
-
-    console.log(`Found ${allSets.length} total sets from Scryfall`);
-
-    // Calculate which batch we're processing
-    const endIndex = Math.min(startIndex + batchSize, allSets.length);
-    const currentBatch = allSets.slice(startIndex, endIndex);
-    const isLastBatch = endIndex >= allSets.length;
-
-    console.log(
-      `Processing batch ${startIndex} to ${endIndex - 1} (${
-        currentBatch.length
-      } sets)`
-    );
-
-    // Process current batch
-    let created = 0;
-    let updated = 0;
-    let unchanged = 0;
-
-    for (const setData of currentBatch) {
-      const {
-        code,
-        name,
-        set_type,
-        released_at,
-        card_count,
-        digital,
-        nonfoil_only,
-        foil_only,
-        icon_svg_uri,
-      } = setData;
-
-      // Calculate if this set should be filtered
-      const standardSetTypes = [
-        "core",
-        "expansion",
-        "masters",
-        "draft_innovation",
-        "commander",
-        "starter",
-      ];
-      const shouldFilter = !standardSetTypes.includes(set_type);
-
-      // Update or create
-      const result = await Set.updateOne(
-        { code: code.toLowerCase() },
-        {
-          code: code.toLowerCase(),
-          name,
-          set_type,
-          release_date: released_at,
-          card_count,
-          shouldFilter,
-          digital: digital || false,
-          nonfoil_only: nonfoil_only || false,
-          foil_only: foil_only || false,
-          icon_svg_uri,
-        },
-        { upsert: true }
-      );
-
-      if (result.upsertedCount) {
-        created++;
-      } else if (result.modifiedCount) {
-        updated++;
-      } else {
-        unchanged++;
-      }
-    }
-
-    res.json({
-      success: true,
-      message: `Sets batch processed: ${created} created, ${updated} updated, ${unchanged} unchanged`,
-      stats: {
-        batchSize,
-        startIndex,
-        endIndex,
-        processed: currentBatch.length,
-        created,
-        updated,
-        unchanged,
-        totalSets: allSets.length,
-        isLastBatch,
-        nextBatchStart: isLastBatch ? null : endIndex,
-      },
-    });
-  } catch (error) {
-    console.error("Error updating sets batch:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to update sets batch",
       error: error.message,
     });
   }
