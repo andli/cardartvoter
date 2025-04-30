@@ -73,6 +73,28 @@ exports.getTopArtists = async (limit = 10) => {
   // Make C value scale with database size - minimum 40
   const C = Math.max(40, Math.floor(stats.totalCards * 0.01));
 
+  // First, get highest rated card for each artist
+  const highestRatedCardsByArtist = await Card.aggregate([
+    { $match: { enabled: true, rating: { $gt: 1500 } } },
+    { $sort: { rating: -1 } }, // Sort all cards by rating descending
+    {
+      $group: {
+        _id: "$artist",
+        notableScryfallId: { $first: "$scryfallId" },
+        notableCardName: { $first: "$name" },
+      },
+    },
+  ]);
+
+  // Create a lookup map for fast access
+  const notableCardsMap = {};
+  highestRatedCardsByArtist.forEach((item) => {
+    notableCardsMap[item._id] = {
+      scryfallId: item.notableScryfallId,
+      name: item.notableCardName,
+    };
+  });
+
   // Set minimum card count for top rankings
   const minCardCount = 10;
 
@@ -82,43 +104,15 @@ exports.getTopArtists = async (limit = 10) => {
     {
       $group: {
         _id: "$artist",
-        name: { $first: "$artist" }, // Add this for consistency
+        name: { $first: "$artist" },
         avgRating: { $avg: "$rating" },
         cardCount: { $sum: 1 },
-        notableScryfallId: {
-          $first: {
-            $cond: {
-              if: { $gte: ["$rating", 1600] },
-              then: "$scryfallId",
-              else: null,
-            },
-          },
-        },
-        notableCardName: {
-          $first: {
-            $cond: {
-              if: { $gte: ["$rating", 1600] },
-              then: "$name",
-              else: null,
-            },
-          },
-        },
-        cards: {
-          $push: { id: "$scryfallId", name: "$name", rating: "$rating" },
-        },
       },
     },
     // Higher minimum card threshold
     { $match: { cardCount: { $gte: minCardCount } } },
     {
-      $project: {
-        _id: 0,
-        name: "$_id", // Artist name
-        avgRating: 1,
-        cardCount: 1,
-        notableScryfallId: 1,
-        notableCardName: 1,
-        cards: 1,
+      $addFields: {
         // Calculate Bayesian average with dynamic C value
         bayesianRating: {
           $divide: [
@@ -140,12 +134,17 @@ exports.getTopArtists = async (limit = 10) => {
     { $limit: limit },
   ]);
 
-  // Format for UI display and maintain compatibility
-  return artists.map((artist) => ({
-    ...artist,
-    formattedRating: artist.bayesianRating.toFixed(0),
-    averageRating: artist.bayesianRating,
-  }));
+  // Add the notable card information back to each artist
+  return artists.map((artist) => {
+    const notable = notableCardsMap[artist._id] || {};
+    return {
+      ...artist,
+      notableScryfallId: notable.scryfallId || null,
+      notableCardName: notable.name || null,
+      formattedRating: artist.bayesianRating.toFixed(0),
+      averageRating: artist.bayesianRating,
+    };
+  });
 };
 
 exports.getBottomArtists = async (limit = 10) => {
