@@ -124,15 +124,14 @@ router.post("/update-sets", adminAuth, async (req, res) => {
       } = setData;
 
       // Calculate if this set should be filtered
-      const standardSetTypes = [
-        "core",
-        "expansion",
-        "masters",
-        "draft_innovation",
-        "commander",
-        "starter",
-      ];
-      const shouldFilter = !standardSetTypes.includes(set_type);
+      const shouldFilter = [
+        "token",
+        "memorabilia",
+        "promo",
+        "alchemy",
+        "digital",
+        "minigame",
+      ].includes(set_type);
 
       // Add to bulk operations array
       bulkOps.push({
