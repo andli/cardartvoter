@@ -125,7 +125,13 @@ router.post("/update-sets", adminAuth, async (req, res) => {
 
       // Calculate if this set should be filtered
       // We filter out token sets, memorabilia, and promo sets
-      const shouldFilter = ["token", "memorabilia", "promo"].includes(set_type);
+      const shouldFilter = [
+        "token",
+        "memorabilia",
+        "promo",
+        "alchemy",
+        "minigame",
+      ].includes(set_type);
 
       // Update or create
       const result = await Set.updateOne(
@@ -169,42 +175,6 @@ router.post("/update-sets", adminAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to update sets",
-      error: error.message,
-    });
-  }
-});
-
-// Add this after your update-sets route
-
-// Check set filter data
-router.get("/check-set-filters", adminAuth, async (req, res) => {
-  try {
-    const regularSets = await Set.countDocuments({ shouldFilter: false });
-    const filteredSets = await Set.countDocuments({ shouldFilter: true });
-
-    const sampleRegularSets = await Set.find({ shouldFilter: false })
-      .sort({ name: 1 })
-      .limit(10)
-      .select("name set_type code");
-
-    const sampleFilteredSets = await Set.find({ shouldFilter: true })
-      .sort({ name: 1 })
-      .limit(10)
-      .select("name set_type code");
-
-    res.json({
-      counts: {
-        regularSets,
-        filteredSets,
-      },
-      samples: {
-        regularSets: sampleRegularSets,
-        filteredSets: sampleFilteredSets,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
       error: error.message,
     });
   }
