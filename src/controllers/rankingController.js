@@ -11,10 +11,10 @@ exports.displayRankings = async (req, res) => {
     const bottomCards = await rankingService.getBottomRankedCards(20);
 
     // Get top artists
-    const topArtists = await rankingService.getTopRankedArtists(10);
+    const topArtists = await rankingService.getTopRankedArtists(15);
 
     // Get bottom artists
-    const bottomArtists = await rankingService.getBottomRankedArtists(10);
+    const bottomArtists = await rankingService.getBottomRankedArtists(15);
 
     // Get top and bottom sets
     const topSets = await rankingService.getTopSets(10);
