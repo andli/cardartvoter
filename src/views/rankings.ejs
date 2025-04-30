@@ -306,18 +306,22 @@
                 <tr>
                   <td class="text-center align-middle"><%= index + 1 %></td>
                   <td>
-                    <div class="d-flex align-items-center">
-                      <div class="fw-medium">
-                        <% if (set.code) { %>
-                        <a
-                          href="https://scryfall.com/sets/<%= set.code.toLowerCase() %>"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <%= set.name %>
-                        </a>
-                        <% } else { %> <%= set.name %> <% } %>
-                      </div>
+                    <div class="set-name-container">
+                      <img
+                        src="<%= getSetIconPath(set.code) %>"
+                        alt="<%= set.name %>"
+                        class="set-icon"
+                        onerror="this.src='/images/default-set-icon.svg';"
+                      />
+                      <% if (set.code) { %>
+                      <a
+                        href="https://scryfall.com/sets/<%= set.code.toLowerCase() %>"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <%= set.name %>
+                      </a>
+                      <% } else { %> <%= set.name %> <% } %>
                     </div>
                   </td>
                 </tr>
@@ -349,18 +353,22 @@
                 <tr>
                   <td class="text-center align-middle"><%= index + 1 %></td>
                   <td>
-                    <div class="d-flex align-items-center">
-                      <div class="fw-medium">
-                        <% if (set.code) { %>
-                        <a
-                          href="https://scryfall.com/sets/<%= set.code.toLowerCase() %>"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <%= set.name %>
-                        </a>
-                        <% } else { %> <%= set.name %> <% } %>
-                      </div>
+                    <div class="set-name-container">
+                      <img
+                        src="<%= getSetIconPath(set.code) %>"
+                        alt="<%= set.name %>"
+                        class="set-icon"
+                        onerror="this.src='/images/default-set-icon.svg';"
+                      />
+                      <% if (set.code) { %>
+                      <a
+                        href="https://scryfall.com/sets/<%= set.code.toLowerCase() %>"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <%= set.name %>
+                      </a>
+                      <% } else { %> <%= set.name %> <% } %>
                     </div>
                   </td>
                 </tr>

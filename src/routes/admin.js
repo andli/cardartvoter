@@ -3,6 +3,7 @@ const router = express.Router();
 const { importSetWithRateLimiting } = require("../admin/importCards");
 const Card = require("../models/Card"); // Add this line to import the Card model
 const Set = require("../models/Set");
+const storage = require("../utils/storage");
 const axios = require("axios");
 
 // Simple admin auth middleware
@@ -175,6 +176,88 @@ router.post("/update-sets", adminAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to update sets",
+      error: error.message,
+    });
+  }
+});
+
+// Add this new admin route
+router.post("/download-set-icons", adminAuth, async (req, res) => {
+  try {
+    console.log(
+      `Admin request to download set icons (${
+        isDev ? "development" : "production"
+      } mode)`
+    );
+
+    // Get all sets from the database
+    const sets = await Set.find({ shouldFilter: false }).lean();
+    console.log(`Found ${sets.length} sets to process`);
+
+    let downloaded = 0;
+    let failed = 0;
+    let skipped = 0;
+
+    // Process each set
+    for (const set of sets) {
+      try {
+        if (!set.code) {
+          skipped++;
+          continue;
+        }
+
+        const setCode = set.code.toLowerCase();
+        const iconName = `${setCode}.svg`;
+
+        // Check if we already have this icon
+        if (await storage.iconExists(setCode)) {
+          skipped++;
+          continue;
+        }
+
+        // Construct icon URL
+        const iconUrl = `https://svgs.scryfall.io/sets/${setCode}.svg`;
+
+        // Fetch the icon
+        const response = await axios
+          .get(iconUrl, {
+            responseType: "arraybuffer",
+            validateStatus: (status) => status === 200,
+          })
+          .catch(() => null);
+
+        if (!response || !response.data) {
+          failed++;
+          continue;
+        }
+
+        // Store in appropriate storage based on environment
+        await storage.storeIcon(iconName, response.data);
+        downloaded++;
+
+        // Add small delay to be nice to Scryfall
+        await new Promise((r) => setTimeout(r, 100));
+
+        // Log progress periodically
+        if (downloaded % 10 === 0) {
+          console.log(`Downloaded ${downloaded} icons so far...`);
+        }
+      } catch (err) {
+        console.error(`Error processing set ${set.code}:`, err);
+        failed++;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Set icons processed: ${downloaded} downloaded, ${skipped} skipped, ${failed} failed`,
+      stats: { downloaded, skipped, failed, total: sets.length },
+    });
+  } catch (error) {
+    console.error("Error downloading set icons:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to download set icons",
       error: error.message,
     });
   }

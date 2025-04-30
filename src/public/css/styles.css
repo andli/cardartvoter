@@ -522,3 +522,18 @@ a.text-muted:hover {
 .voting-card {
   transition: box-shadow 0.2s ease-out;
 }
+
+/* Make the container flex to place items side-by-side */
+.set-name-container {
+  display: flex;
+  align-items: center;
+}
+
+/* Keep your existing icon styling */
+img.set-icon {
+  width: 20px !important;
+  height: 20px !important;
+  margin-right: 8px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}

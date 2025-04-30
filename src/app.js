@@ -49,7 +49,22 @@ const indexRouter = require("./routes/home");
 const apiRouter = require("./routes/api");
 const adminRouter = require("./routes/admin");
 
-// ONLY AFTER the session middleware, include your routes
+// Move this BEFORE your route registrations
+// Add near where you set up your other middleware (before routes)
+const storage = require("./utils/storage");
+
+// Make helper functions available in all templates
+app.use((req, res, next) => {
+  // Add a synchronous function that doesn't need await in templates
+  res.locals.getSetIconPath = (code) => {
+    if (!code) return "/images/default-set-icon.svg";
+    return `/images/set-icons/${code.toLowerCase()}.svg`;
+  };
+
+  next();
+});
+
+// AFTER middleware, then register your routes
 app.use("/", indexRouter);
 app.use("/api", apiRouter);
 app.use("/admin", adminRouter);
