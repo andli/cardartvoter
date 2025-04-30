@@ -6,7 +6,11 @@ const crypto = require("crypto");
 // In your getHomePage controller, store the current card pair in the session
 exports.getHomePage = async (req, res) => {
   try {
-    const cards = await cardService.getCardPair();
+    // Only accept ID parameter
+    const targetCardId = req.query.target_card_id || null;
+
+    // Pass only the ID to cardService
+    const cards = await cardService.getCardPair(targetCardId);
     const topRankings = await rankingService.getTopRankings(10, 1);
 
     // Generate and store pair ID if we have cards

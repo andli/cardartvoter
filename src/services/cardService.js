@@ -4,19 +4,38 @@ const Card = require("../models/Card");
 
 /**
  * Get a pair of cards for voting comparison
+ * Supports targeting by card ID
  */
-exports.getCardPair = async () => {
+exports.getCardPair = async (targetCardId = null) => {
   try {
-    // Count total available cards
-    const totalCards = await Card.countDocuments({ enabled: true });
+    // ID-based targeting
+    if (targetCardId) {
+      console.log(`Targeting card by ID: ${targetCardId}`);
+      const targetCard = await Card.findOne({
+        scryfallId: targetCardId,
+        enabled: true,
+      }).lean();
 
-    if (totalCards < 2) {
-      console.warn(
-        `Only ${totalCards} cards available in database. Need at least 2 for comparison.`
-      );
-      // Return empty array instead of throwing error
-      return [];
+      if (targetCard) {
+        console.log(`Found target card by ID: ${targetCard.name}`);
+
+        // Get a random second card
+        const randomCard = await Card.findOne(
+          { enabled: true, _id: { $ne: targetCard._id } },
+          {},
+          { sort: { comparisons: 1 } }
+        ).lean();
+
+        return [targetCard, randomCard];
+      } else {
+        console.log(
+          `Card with ID ${targetCardId} not found, using normal selection`
+        );
+      }
     }
+
+    // If we get here, either no target was specified or it wasn't found
+    // Use the existing card selection logic...
 
     // Random number to determine selection strategy
     const strategy = Math.random();

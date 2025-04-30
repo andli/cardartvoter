@@ -12,7 +12,7 @@ After a while (a month?) the ranking could be reset and historical rankings can 
 
 Card art and data like unique id numbers for cards will be fetched from the Scryfall API. We adhere to Scryfall's Rate Limits and Good Citizenship.
 
-## TODO:
+## TODO
 
 - Filter out sets from the Top sets list
   - set_type: token,
