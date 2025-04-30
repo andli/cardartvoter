@@ -184,6 +184,9 @@ router.post("/update-sets", adminAuth, async (req, res) => {
 // Add this new admin route
 router.post("/download-set-icons", adminAuth, async (req, res) => {
   try {
+    // Add this line to define isDev
+    const isDev = process.env.NODE_ENV !== "production";
+
     console.log(
       `Admin request to download set icons (${
         isDev ? "development" : "production"
