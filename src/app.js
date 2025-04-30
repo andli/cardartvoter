@@ -55,12 +55,18 @@ const storage = require("./utils/storage");
 
 // Make helper functions available in all templates
 app.use((req, res, next) => {
-  // Add a synchronous function that doesn't need await in templates
   res.locals.getSetIconPath = (code) => {
     if (!code) return "/images/default-set-icon.svg";
+
+    // In production, use Scryfall's CDN directly instead of our own paths
+    // This bypasses our storage layer entirely for faster page loads
+    if (process.env.NODE_ENV === "production") {
+      return `https://svgs.scryfall.io/sets/${code.toLowerCase()}.svg`;
+    }
+
+    // In development, use local files
     return `/images/set-icons/${code.toLowerCase()}.svg`;
   };
-
   next();
 });
 
