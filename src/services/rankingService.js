@@ -7,7 +7,10 @@ const mongoose = require("mongoose");
  */
 exports.getTopRankedCards = async (limit = 20, minComparisons = 1) => {
   try {
-    const cards = await Card.find({ comparisons: { $gte: minComparisons } })
+    const cards = await Card.find({
+      enabled: true,
+      comparisons: { $gte: minComparisons },
+    })
       .sort({ rating: -1 }) // Descending order (highest first)
       .limit(limit)
       .lean();
@@ -27,7 +30,10 @@ exports.getTopRankedCards = async (limit = 20, minComparisons = 1) => {
  */
 exports.getBottomRankedCards = async (limit = 20, minComparisons = 1) => {
   try {
-    const cards = await Card.find({ comparisons: { $gte: minComparisons } })
+    const cards = await Card.find({
+      enabled: true,
+      comparisons: { $gte: minComparisons },
+    })
       .sort({ rating: 1 }) // Ascending order (lowest first)
       .limit(limit)
       .lean();
@@ -50,7 +56,7 @@ exports.getTopRankedArtists = async (limit = 20, minCards = 5) => {
     // First, get top artists without storing all card data
     const artistStats = await Card.aggregate([
       // Filter cards with comparisons
-      { $match: { comparisons: { $gt: 0 } } },
+      { $match: { enabled: true, comparisons: { $gt: 0 } } },
 
       // Group by artist but don't store all cards
       {
@@ -111,7 +117,7 @@ exports.getBottomRankedArtists = async (limit = 20, minCards = 5) => {
     // First, get bottom artists without storing all card data
     const artistStats = await Card.aggregate([
       // Filter cards with comparisons
-      { $match: { comparisons: { $gt: 0 } } },
+      { $match: { enabled: true, comparisons: { $gt: 0 } } },
 
       // Group by artist but don't store all cards
       {
