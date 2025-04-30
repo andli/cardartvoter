@@ -18,58 +18,86 @@ exports.getCardPair = async () => {
       return [];
     }
 
-    // Increase randomness - increase to 50% completely random selections
-    if (Math.random() < 0.5) {
-      // Use aggregate with $sample for better randomness
+    // Random number to determine selection strategy
+    const strategy = Math.random();
+
+    // Strategy 1 (30%): Target top-rated cards for challenging
+    if (strategy < 0.3) {
+      // Get a card from the top 20
+      const topCards = await Card.find({ enabled: true })
+        .sort({ rating: -1 })
+        .limit(20)
+        .lean();
+
+      // Select one random top card
+      const featuredCard =
+        topCards[Math.floor(Math.random() * topCards.length)];
+
+      // Find a worthy challenger (from the top 100, but not in top 20)
+      const challenger = await Card.aggregate([
+        {
+          $match: {
+            enabled: true,
+            _id: { $ne: featuredCard._id },
+            rating: { $lt: featuredCard.rating }, // Must be lower rated
+          },
+        },
+        { $sort: { rating: -1 } },
+        { $skip: 20 }, // Skip the very top cards
+        { $limit: 80 }, // Take the next 80 cards (21-100 in rankings)
+        { $sample: { size: 1 } }, // Pick one randomly
+      ]).then((results) => results[0]);
+
+      return [featuredCard, challenger];
+    }
+    // Strategy 2 (30%): Pure random selection
+    else if (strategy < 0.6) {
       const randomCards = await Card.aggregate([
         { $match: { enabled: true } },
         { $sample: { size: 2 } },
       ]);
       return randomCards;
     }
-
-    // For the other 50%, use a better strategy to find under-represented cards
-    // Use the aggregation pipeline with $sample to get cards with fewer comparisons
-    const lessSeenCards = await Card.aggregate([
-      { $match: { enabled: true } },
-      // Group cards into buckets by comparison count
-      // 0-5, 6-20, 21-50, 51-100, >100
-      {
-        $bucket: {
-          groupBy: "$comparisons",
-          boundaries: [0, 6, 21, 51, 101],
-          default: "many",
-          output: {
-            count: { $sum: 1 },
-            cards: { $push: "$$ROOT" },
+    // Strategy 3 (40%): Focus on under-represented cards (your existing strategy)
+    else {
+      // Use the aggregation pipeline with $sample to get cards with fewer comparisons
+      const lessSeenCards = await Card.aggregate([
+        { $match: { enabled: true } },
+        // Group cards into buckets by comparison count
+        // 0-5, 6-20, 21-50, 51-100, >100
+        {
+          $bucket: {
+            groupBy: "$comparisons",
+            boundaries: [0, 6, 21, 51, 101],
+            default: "many",
+            output: {
+              count: { $sum: 1 },
+              cards: { $push: "$$ROOT" },
+            },
           },
         },
-      },
-      // Sort by bucket (prioritize less-compared cards)
-      { $sort: { _id: 1 } },
-      // Get the first non-empty bucket
-      { $match: { count: { $gt: 0 } } },
-      { $limit: 1 },
-      // Unwind to get individual cards
-      { $unwind: "$cards" },
-      // Get a random sample from this bucket
-      { $sample: { size: 2 } },
-      // Just return the card
-      { $replaceRoot: { newRoot: "$cards" } },
-    ]);
+        // Rest of your existing pipeline...
+        { $sort: { _id: 1 } },
+        { $match: { count: { $gt: 0 } } },
+        { $limit: 1 },
+        { $unwind: "$cards" },
+        { $sample: { size: 2 } },
+        { $replaceRoot: { newRoot: "$cards" } },
+      ]);
 
-    // If we got two cards, return them
-    if (lessSeenCards && lessSeenCards.length === 2) {
-      return lessSeenCards;
+      // If we got two cards, return them
+      if (lessSeenCards && lessSeenCards.length === 2) {
+        return lessSeenCards;
+      }
+
+      // Fallback to pure random if the bucketing approach didn't work
+      const fallbackCards = await Card.aggregate([
+        { $match: { enabled: true } },
+        { $sample: { size: 2 } },
+      ]);
+
+      return fallbackCards;
     }
-
-    // Fallback to pure random if the bucketing approach didn't work
-    const fallbackCards = await Card.aggregate([
-      { $match: { enabled: true } },
-      { $sample: { size: 2 } },
-    ]);
-
-    return fallbackCards;
   } catch (error) {
     console.error("Error fetching card pair:", error);
     return [];
