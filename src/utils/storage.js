@@ -88,12 +88,31 @@ exports.iconExists = async (setCode) => {
       return false;
     }
   } else {
-    // Use the cached list if available
-    if (!iconCache || Date.now() - cacheTimestamp > CACHE_DURATION) {
-      // Force refresh by calling getIconUrl with the same code
-      await exports.getIconUrl(setCode);
-    }
+    // Production mode - handle missing token
+    try {
+      // Check if blob is configured
+      if (!process.env.BLOB_READ_WRITE_TOKEN) {
+        console.warn("Vercel Blob token not configured, using fallback paths");
+        return false; // Just assume it doesn't exist and let onerror handle it
+      }
 
-    return !!iconCache[setCode.toLowerCase()];
+      if (!iconCache || Date.now() - cacheTimestamp > CACHE_DURATION) {
+        const { blobs } = await list({ prefix: "set-icons/" });
+        iconCache = {};
+
+        for (const blob of blobs) {
+          const filename = blob.pathname.split("/").pop();
+          const code = filename.replace(".svg", "");
+          iconCache[code] = blob.url;
+        }
+
+        cacheTimestamp = Date.now();
+      }
+
+      return !!iconCache[setCode.toLowerCase()];
+    } catch (e) {
+      console.error("Error checking if icon exists:", e);
+      return false; // Safer to return false and use fallback
+    }
   }
 };
