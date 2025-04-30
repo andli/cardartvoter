@@ -166,25 +166,27 @@ exports.getBottomArtists = async (limit = 10) => {
   // Make C value scale with database size - minimum 40
   const C = Math.max(40, Math.floor(stats.totalCards * 0.01));
 
-  // First, get highest rated card for each artist
-  const highestRatedCardsByArtist = await Card.aggregate([
-    { $match: { enabled: true, rating: { $gt: 1500 } } },
-    { $sort: { rating: -1 } }, // Sort all cards by rating descending
+  // First, get LOWEST rated card for each artist (changed from highest)
+  const lowestRatedCardsByArtist = await Card.aggregate([
+    { $match: { enabled: true, comparisons: { $gte: 5 } } }, // Ensure some votes for fairness
+    { $sort: { rating: 1 } }, // Sort all cards by rating ASCENDING (lowest first)
     {
       $group: {
         _id: "$artist",
-        notableScryfallId: { $first: "$scryfallId" },
+        notableScryfallId: { $first: "$scryfallId" }, // Now gets their worst card
         notableCardName: { $first: "$name" },
+        worstRating: { $first: "$rating" }, // Track lowest rating for reference
       },
     },
   ]);
 
   // Create a lookup map for fast access
   const notableCardsMap = {};
-  highestRatedCardsByArtist.forEach((item) => {
+  lowestRatedCardsByArtist.forEach((item) => {
     notableCardsMap[item._id] = {
       scryfallId: item.notableScryfallId,
       name: item.notableCardName,
+      rating: item.worstRating,
     };
   });
 
@@ -234,6 +236,7 @@ exports.getBottomArtists = async (limit = 10) => {
       ...artist,
       notableScryfallId: notable.scryfallId || null,
       notableCardName: notable.name || null,
+      notableCardRating: notable.rating || null, // Add rating for reference
       formattedRating: artist.bayesianRating.toFixed(0),
       averageRating: artist.bayesianRating,
     };
