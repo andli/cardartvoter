@@ -14,12 +14,9 @@ Card art and data like unique id numbers for cards will be fetched from the Scry
 
 ## TODO
 
-- Filter out sets from the Top sets list
-  - set_type: token,
 - Ranking trends up/down
 - List most most popular red cards, etc etc on the Rankings page
 - Handle double sided cards
-- Filter out weird cards and tokens(?)
 - For generic names like "Mountain", add a gatherer ID
 
 ## Ranking algorithm

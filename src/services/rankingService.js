@@ -193,8 +193,8 @@ exports.getTopArtists = async (limit = 10) => {
     { $group: { _id: null, avgRating: { $avg: "$rating" } } },
   ]).then((result) => result[0]?.avgRating || 1500); // Default to 1500 if no cards
 
-  // Weight constant - adjust based on your data
-  const C = 8;
+  // Increase the weight constant significantly
+  const C = 25; // Previously 8, now 25 to reduce impact of small samples
 
   // Get all artists with their ratings
   const artists = await Card.aggregate([
@@ -204,18 +204,41 @@ exports.getTopArtists = async (limit = 10) => {
         _id: "$artist",
         avgRating: { $avg: "$rating" },
         cardCount: { $sum: 1 },
+        // Find the highest rated card for this artist
+        notableScryfallId: {
+          $first: {
+            $cond: {
+              if: { $gte: ["$rating", 1600] }, // Only select well-rated cards as examples
+              then: "$scryfallId",
+              else: null,
+            },
+          },
+        },
+        notableCardName: {
+          $first: {
+            $cond: {
+              if: { $gte: ["$rating", 1600] },
+              then: "$name",
+              else: null,
+            },
+          },
+        },
         cards: {
           $push: { id: "$scryfallId", name: "$name", rating: "$rating" },
         },
       },
     },
+    // Add minimum card threshold - consistent with bottom artists
+    { $match: { cardCount: { $gte: 5 } } },
     {
       $project: {
         artist: "$_id",
         avgRating: 1,
         cardCount: 1,
+        notableScryfallId: 1,
+        notableCardName: 1,
         cards: 1,
-        // Calculate Bayesian average
+        // Calculate Bayesian average with increased C
         bayesianRating: {
           $divide: [
             {
@@ -226,6 +249,10 @@ exports.getTopArtists = async (limit = 10) => {
             },
             { $add: [C, "$cardCount"] },
           ],
+        },
+        // Add confidence score
+        confidenceScore: {
+          $min: [1, { $divide: ["$cardCount", 20] }], // Max confidence at 20+ cards
         },
       },
     },
@@ -247,10 +274,10 @@ exports.getBottomArtists = async (limit = 10) => {
   const globalAvg = await Card.aggregate([
     { $match: { enabled: true } },
     { $group: { _id: null, avgRating: { $avg: "$rating" } } },
-  ]).then((result) => result[0]?.avgRating || 1500); // Default to 1500 if no cards
+  ]).then((result) => result[0]?.avgRating || 1500);
 
-  // Weight constant - adjust based on your data
-  const C = 8;
+  // Use the same increased weight constant
+  const C = 25; // Was 8, now 25
 
   // Get all artists with their ratings
   const artists = await Card.aggregate([
@@ -260,33 +287,31 @@ exports.getBottomArtists = async (limit = 10) => {
         _id: "$artist",
         avgRating: { $avg: "$rating" },
         cardCount: { $sum: 1 },
+        notableScryfallId: {
+          $first: {
+            $cond: {
+              if: { $gte: ["$rating", 1600] },
+              then: "$scryfallId",
+              else: null,
+            },
+          },
+        },
+        notableCardName: {
+          $first: {
+            $cond: {
+              if: { $gte: ["$rating", 1600] },
+              then: "$name",
+              else: null,
+            },
+          },
+        },
         cards: {
           $push: { id: "$scryfallId", name: "$name", rating: "$rating" },
         },
       },
     },
-    {
-      $project: {
-        artist: "$_id",
-        avgRating: 1,
-        cardCount: 1,
-        cards: 1,
-        // Calculate Bayesian average
-        bayesianRating: {
-          $divide: [
-            {
-              $add: [
-                { $multiply: [C, globalAvg] },
-                { $multiply: ["$avgRating", "$cardCount"] },
-              ],
-            },
-            { $add: [C, "$cardCount"] },
-          ],
-        },
-      },
-    },
-    // Only include artists with at least 3 cards for statistical significance
-    { $match: { cardCount: { $gte: 3 } } },
+    // Add minimum card threshold - consistent with bottom artists
+    { $match: { cardCount: { $gte: 5 } } },
     // Sort by bayesianRating in ASCENDING order for bottom artists
     { $sort: { bayesianRating: 1 } },
     { $limit: limit },
