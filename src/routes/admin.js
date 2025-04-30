@@ -268,4 +268,47 @@ router.post("/download-set-icons", adminAuth, async (req, res) => {
   }
 });
 
+// Add this route to update card filters based on set data
+router.post("/update-card-filters", adminAuth, async (req, res) => {
+  try {
+    console.log("Admin request to update card filtering based on set data");
+
+    // Get all filtered sets
+    const filteredSets = await Set.find({ shouldFilter: true })
+      .select("code")
+      .lean();
+    const filteredSetCodes = filteredSets.map((s) => s.code);
+
+    console.log(`Found ${filteredSetCodes.length} filtered sets`);
+
+    // Disable cards from filtered sets
+    const result = await Card.updateMany(
+      { set: { $in: filteredSetCodes } },
+      { $set: { enabled: false } }
+    );
+
+    // Re-enable cards from non-filtered sets (in case set filter status changed)
+    const enableResult = await Card.updateMany(
+      { set: { $nin: filteredSetCodes }, enabled: false },
+      { $set: { enabled: true } }
+    );
+
+    res.json({
+      success: true,
+      message: "Card filters updated successfully",
+      stats: {
+        disabledCards: result.modifiedCount,
+        enabledCards: enableResult.modifiedCount,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating card filters:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update card filters",
+      error: error.message,
+    });
+  }
+});
+
 module.exports = router;

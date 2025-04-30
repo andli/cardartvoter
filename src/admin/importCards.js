@@ -1,5 +1,6 @@
 const axios = require("axios");
 const Card = require("../models/Card");
+const Set = require("../models/Set");
 
 async function importCardsWithRateLimiting(query) {
   try {
@@ -26,7 +27,6 @@ async function importCardsWithRateLimiting(query) {
     );
     console.log(`Bulk data was updated at: ${artworkBulkData.updated_at}`);
 
-    // Step 2: Download the bulk data (214 MB according to your message)
     const cardsResponse = await axios.get(artworkBulkData.download_uri);
     const allCards = cardsResponse.data;
 
@@ -34,9 +34,26 @@ async function importCardsWithRateLimiting(query) {
       `Downloaded ${allCards.length} unique artwork cards from bulk data`
     );
 
+    // NEW STEP: Get all filtered sets before processing
+    const filteredSets = await Set.find({ shouldFilter: true })
+      .select("code")
+      .lean();
+    const filteredSetCodes = new Set(filteredSets.map((s) => s.code));
+
+    console.log(`Found ${filteredSetCodes.size} filtered sets to exclude`);
+
+    // Pre-filter cards from filtered sets
+    let cardsToImport = allCards.filter(
+      (card) => !filteredSetCodes.has(card.set)
+    );
+    console.log(
+      `Removed ${
+        allCards.length - cardsToImport.length
+      } cards from filtered sets`
+    );
+
     // Step 3: Filter cards based on query if provided
     // Note: We're keeping filtering capability but removing default filters
-    let cardsToImport = allCards;
     if (query && query !== "unique_artwork") {
       // This allows for custom queries but doesn't default to any filters
       const filters = query
@@ -53,7 +70,7 @@ async function importCardsWithRateLimiting(query) {
       // Only apply filtering if we actually have filters
       if (filters.length > 0) {
         console.log(`Applying custom filters: ${query}`);
-        cardsToImport = allCards.filter((card) => {
+        cardsToImport = cardsToImport.filter((card) => {
           for (const filter of filters) {
             const field = filter.field.replace(/^-/, "");
 
@@ -126,5 +143,22 @@ async function importCardsWithRateLimiting(query) {
     throw error;
   }
 }
+
+exports.importSetWithRateLimiting = async (setCode) => {
+  try {
+    // Check if this set should be filtered
+    const setData = await Set.findOne({ code: setCode.toLowerCase() });
+
+    if (setData?.shouldFilter) {
+      console.log(`Set ${setCode} is marked for filtering. Skipping import.`);
+      return 0; // Return 0 cards added
+    }
+
+    // Rest of your existing import code...
+  } catch (error) {
+    console.error("Error during set import:", error);
+    throw error;
+  }
+};
 
 module.exports = { importCardsWithRateLimiting };
