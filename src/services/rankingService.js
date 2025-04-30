@@ -164,7 +164,7 @@ exports.getBottomArtists = async (limit = 10) => {
   }));
 
   // Make C value scale with database size - minimum 40
-  const C = Math.max(40, Math.floor(stats.totalCards * 0.01));
+  const C = Math.max(25, Math.floor(stats.totalCards * 0.001));
 
   // First, get LOWEST rated card for each artist (changed from highest)
   const lowestRatedCardsByArtist = await Card.aggregate([
