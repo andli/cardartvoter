@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", function () {
     event.preventDefault();
 
     // Get the card ID and pair ID
-    const cardId = cardElement.dataset.cardId;
+    const selectedCardId = cardElement.dataset.cardId;
     const pairIdElement = document.querySelector('input[name="pairId"]');
 
     // Add this to highlight the selected card
@@ -39,6 +39,17 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const pairId = pairIdElement.value;
+    
+    // Find the other card in the pair
+    const allCardElements = document.querySelectorAll(".voting-card");
+    let otherCardId = null;
+    
+    // Loop through all card elements to find the one that wasn't selected
+    allCardElements.forEach(card => {
+      if (card !== cardElement && card.dataset.cardId) {
+        otherCardId = card.dataset.cardId;
+      }
+    });
 
     try {
       // Increase delay to 500ms (0.5s) to show the highlight longer
@@ -62,7 +73,8 @@ document.addEventListener("DOMContentLoaded", function () {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          selectedCardId: cardId,
+          selectedCardId: selectedCardId,
+          otherCardId: otherCardId, // Include the other card ID
           pairId: pairId,
         }),
         credentials: "same-origin", // Ensure cookies are sent with the request

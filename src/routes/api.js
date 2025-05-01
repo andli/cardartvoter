@@ -137,31 +137,53 @@ router.get("/cards/pair", async (req, res) => {
 // Submit a vote between two cards
 router.post("/vote", async (req, res) => {
   try {
-    const { selectedCardId, pairId } = req.body;
+    const { selectedCardId, pairId, otherCardId } = req.body;
 
-    // Update this validation to look for pairId instead of cardId
+    // Check required parameters - we need both the selected card and the pair ID
     if (!selectedCardId || !pairId) {
       return res.status(400).json({ message: "Missing required parameters" });
     }
 
-    // Get the cards from the database directly instead of relying on session
+    // Get the selected card
     const selectedCard = await Card.findOne({ scryfallId: selectedCardId });
     
     if (!selectedCard) {
       return res.status(404).json({ message: "Selected card not found" });
     }
     
-    // Find another card to compare against (any other enabled card that's not the selected one)
-    const otherCard = await Card.findOne({ 
-      scryfallId: { $ne: selectedCardId }, 
-      enabled: true 
-    });
-
+    // Get the other card in the pair - either from the request body or from the session
+    let otherCard;
+    
+    // If the client explicitly provided the other card ID
+    if (otherCardId) {
+      otherCard = await Card.findOne({ scryfallId: otherCardId });
+    }
+    // Try to get the other card from the session
+    else if (req.session.currentPair && 
+        (req.session.currentPair.card1 === selectedCardId || req.session.currentPair.card2 === selectedCardId)) {
+      // Get the other card ID from the pair
+      const otherCardScryfallId = 
+        req.session.currentPair.card1 === selectedCardId 
+          ? req.session.currentPair.card2 
+          : req.session.currentPair.card1;
+      
+      otherCard = await Card.findOne({ scryfallId: otherCardScryfallId });
+    }
+    
+    // If we still don't have the other card, try to find any other card as a fallback
     if (!otherCard) {
-      return res.status(404).json({ message: "Could not find another card to compare with" });
+      console.warn("Could not find the other card in the pair, using fallback method");
+      otherCard = await Card.findOne({ 
+        scryfallId: { $ne: selectedCardId }, 
+        enabled: true 
+      });
     }
 
-    // Use the cards we found from DB
+    if (!otherCard) {
+      return res.status(404).json({ message: "Could not find the other card in the pair" });
+    }
+
+    // Set the winning and losing cards based on the vote
     const winningCard = selectedCard;
     const losingCard = otherCard;
 
