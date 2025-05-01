@@ -50,10 +50,26 @@ exports.submitVote = async (req, res) => {
     );
 
     // Get the current vote count
-    const voteCount = await statsService.getTotalVotes();
+    const voteCount = await statsService.getVoteCount();
 
     // Get a new card pair
     const newCards = await cardService.getCardPair();
+
+    // Validate that we have two valid cards
+    if (
+      !newCards ||
+      newCards.length !== 2 ||
+      !newCards[0] ||
+      !newCards[1] ||
+      !newCards[0].scryfallId ||
+      !newCards[1].scryfallId
+    ) {
+      console.error("Invalid card pair returned:", newCards);
+      return res.status(500).json({
+        success: false,
+        error: "Could not generate a new card pair. Please refresh the page.",
+      });
+    }
 
     // Generate a new pair ID
     const newPairId = crypto.randomBytes(16).toString("hex");

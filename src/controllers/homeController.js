@@ -16,12 +16,13 @@ exports.getHomePage = async (req, res) => {
     const voteCount = await statsService.getVoteCount();
 
     // Check if we have exactly 2 cards and both have scryfallId
-    const hasValidCards = cards && 
-                         cards.length === 2 && 
-                         cards[0] && 
-                         cards[1] && 
-                         cards[0].scryfallId && 
-                         cards[1].scryfallId;
+    const hasValidCards =
+      cards &&
+      cards.length === 2 &&
+      cards[0] &&
+      cards[1] &&
+      cards[0].scryfallId &&
+      cards[1].scryfallId;
 
     // Generate and store pair ID if we have cards
     let pairId = null;
@@ -36,7 +37,10 @@ exports.getHomePage = async (req, res) => {
         pairId: pairId,
       };
     } else {
-      console.warn("Did not get two valid cards for voting. Cards received:", cards);
+      console.warn(
+        "Did not get two valid cards for voting. Cards received:",
+        cards
+      );
     }
 
     // Render the template with all necessary data
