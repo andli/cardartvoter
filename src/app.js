@@ -36,7 +36,8 @@ app.use(
     cookie: {
       maxAge: 1000 * 60 * 60 * 24, // 1 day
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "none", // Changed from "lax" to "none" to allow cross-site cookies in production
+      httpOnly: true,
     },
     store: store,
     resave: false,

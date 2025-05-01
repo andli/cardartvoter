@@ -65,15 +65,26 @@ document.addEventListener("DOMContentLoaded", function () {
           selectedCardId: cardId,
           pairId: pairId,
         }),
+        credentials: "same-origin", // Ensure cookies are sent with the request
       });
 
       if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || `Network response was not ok: ${response.status}`
+        );
       }
 
       const data = await response.json();
 
       if (data.success) {
+        // Check if we had a session reset
+        if (data.info && data.info.includes("Session was reset")) {
+          console.log(
+            "Session was reset, showing new cards without counting vote"
+          );
+        }
+
         // Update the vote count in the progress bar
         if (data.voteCount !== undefined && progressVoteCount && progressBar) {
           // Update the displayed vote count
@@ -98,7 +109,13 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     } catch (error) {
       console.error("Error during voting:", error);
-      alert("Error submitting vote. Please try again.");
+
+      // Show a more specific error message based on what went wrong
+      if (error.message.includes("Session")) {
+        alert("Session issue detected. Please refresh the page and try again.");
+      } else {
+        alert("Error submitting vote. Please try again.");
+      }
     } finally {
       setTimeout(() => votingContainer.classList.remove("voting-loading"), 800);
       setTimeout(() => votingContainer.classList.remove("animating"), 1200);
