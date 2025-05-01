@@ -19,14 +19,22 @@ exports.getCardPair = async (targetCardId = null) => {
       if (targetCard) {
         console.log(`Found target card by ID: ${targetCard.name}`);
 
-        // Get a random second card
-        const randomCard = await Card.findOne(
-          { enabled: true, _id: { $ne: targetCard._id } },
-          {},
-          { sort: { comparisons: 1 } }
-        ).lean();
+        // Get a completely random second card using aggregate with $sample
+        const randomCards = await Card.aggregate([
+          {
+            $match: {
+              enabled: true,
+              _id: { $ne: targetCard._id },
+            },
+          },
+          { $sample: { size: 1 } },
+        ]);
 
-        return [targetCard, randomCard];
+        if (randomCards && randomCards.length > 0) {
+          return [targetCard, randomCards[0]];
+        } else {
+          console.log(`No other cards found to pair with ${targetCard.name}`);
+        }
       } else {
         console.log(
           `Card with ID ${targetCardId} not found, using normal selection`
