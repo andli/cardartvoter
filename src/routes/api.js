@@ -144,31 +144,26 @@ router.post("/vote", async (req, res) => {
       return res.status(400).json({ message: "Missing required parameters" });
     }
 
-    // Also need to get the otherCardId from session
-    if (
-      !req.session.currentPair ||
-      !req.session.currentPair.card1 ||
-      !req.session.currentPair.card2
-    ) {
-      return res.status(400).json({ message: "Session data missing" });
+    // Get the cards from the database directly instead of relying on session
+    const selectedCard = await Card.findOne({ scryfallId: selectedCardId });
+    
+    if (!selectedCard) {
+      return res.status(404).json({ message: "Selected card not found" });
+    }
+    
+    // Find another card to compare against (any other enabled card that's not the selected one)
+    const otherCard = await Card.findOne({ 
+      scryfallId: { $ne: selectedCardId }, 
+      enabled: true 
+    });
+
+    if (!otherCard) {
+      return res.status(404).json({ message: "Could not find another card to compare with" });
     }
 
-    // Determine which card was not selected
-    const card1Id = req.session.currentPair.card1;
-    const card2Id = req.session.currentPair.card2;
-    const otherCardId = selectedCardId === card1Id ? card2Id : card1Id;
-
-    // Use otherCardId instead of cardId
-    const winningCard = await Card.findOne({ scryfallId: selectedCardId });
-    const losingCard = await Card.findOne({ scryfallId: otherCardId });
-
-    if (!winningCard || !losingCard) {
-      return res.status(404).json({
-        message: "One or both cards not found",
-        winningCardFound: !!winningCard,
-        losingCardFound: !!losingCard,
-      });
-    }
+    // Use the cards we found from DB
+    const winningCard = selectedCard;
+    const losingCard = otherCard;
 
     // Determine K-factor based on combined comparison counts
     const getKFactor = (winnerComps, loserComps) => {
