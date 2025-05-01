@@ -1,5 +1,6 @@
 const cardService = require("../services/cardService");
 const rankingService = require("../services/rankingService");
+const statsService = require("../services/statsService");
 const imageHelpers = require("../utils/imageHelpers");
 const crypto = require("crypto");
 
@@ -12,10 +13,19 @@ exports.getHomePage = async (req, res) => {
     // Pass only the ID to cardService
     const cards = await cardService.getCardPair(targetCardId);
     const topRankings = await rankingService.getTopRankings(10, 1);
+    const voteCount = await statsService.getVoteCount();
+
+    // Check if we have exactly 2 cards and both have scryfallId
+    const hasValidCards = cards && 
+                         cards.length === 2 && 
+                         cards[0] && 
+                         cards[1] && 
+                         cards[0].scryfallId && 
+                         cards[1].scryfallId;
 
     // Generate and store pair ID if we have cards
     let pairId = null;
-    if (cards.length === 2) {
+    if (hasValidCards) {
       // Generate a random nonce for this pair
       pairId = crypto.randomBytes(16).toString("hex");
 
@@ -25,17 +35,21 @@ exports.getHomePage = async (req, res) => {
         timestamp: Date.now(),
         pairId: pairId,
       };
+    } else {
+      console.warn("Did not get two valid cards for voting. Cards received:", cards);
     }
 
     // Render the template with all necessary data
     res.render("index", {
       title: "Home",
-      cards,
+      cards: hasValidCards ? cards : [],
       topRankings,
-      hasCards: cards.length === 2,
+      hasCards: hasValidCards,
       pairId: pairId,
+      voteCount,
       getArtCropUrl: imageHelpers.getArtCropUrl,
       getSmallCardUrl: imageHelpers.getSmallCardUrl,
+      getCardUrl: imageHelpers.getCardUrl,
     });
   } catch (error) {
     console.error("Error loading homepage:", error);

@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const voteService = require("../services/voteService");
 const cardService = require("../services/cardService");
+const statsService = require("../services/statsService");
 
 exports.submitVote = async (req, res) => {
   try {
@@ -48,6 +49,9 @@ exports.submitVote = async (req, res) => {
       req.session.currentPair
     );
 
+    // Get the current vote count
+    const voteCount = await statsService.getTotalVotes();
+
     // Get a new card pair
     const newCards = await cardService.getCardPair();
 
@@ -69,6 +73,7 @@ exports.submitVote = async (req, res) => {
         selectedCard: selectedCardId,
         ratingChange: result.ratingChange || 0,
       },
+      voteCount: voteCount, // Include the total vote count
       newPair: {
         cards: newCards,
         pairId: newPairId,

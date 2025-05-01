@@ -2,6 +2,14 @@
 
 document.addEventListener("DOMContentLoaded", function () {
   const votingContainer = document.querySelector(".voting-section");
+  // Get the progress bar elements
+  const progressVoteCount = document.getElementById("progressVoteCount");
+  const progressBar = document.querySelector(".progress-bar");
+  const progressElement = document.querySelector(".progress");
+  // Get the max value from the progress element (defaulting to 500000)
+  const maxVotes = parseInt(
+    progressElement?.getAttribute("aria-valuemax") || "500000"
+  );
 
   if (!votingContainer) {
     return;
@@ -66,6 +74,23 @@ document.addEventListener("DOMContentLoaded", function () {
       const data = await response.json();
 
       if (data.success) {
+        // Update the vote count in the progress bar
+        if (data.voteCount !== undefined && progressVoteCount && progressBar) {
+          // Update the displayed vote count
+          progressVoteCount.textContent = Number(
+            data.voteCount
+          ).toLocaleString();
+
+          // Update progress bar width
+          const percentage = Math.min(100, (data.voteCount / maxVotes) * 100);
+          progressBar.style.width = percentage + "%";
+
+          // Update aria attributes
+          if (progressElement) {
+            progressElement.setAttribute("aria-valuenow", data.voteCount);
+          }
+        }
+
         // Update the cards with the new pair
         setTimeout(() => updateCardPair(data.newPair), 800);
       } else {

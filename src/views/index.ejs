@@ -37,7 +37,7 @@
       <% } else { %>
       <div class="alert alert-info">
         <h4 class="alert-heading">No Cards Available</h4>
-        <p>The database is currently empty. Please contac and admin.</p>
+        <p>The database is currently empty. Please contact an admin.</p>
       </div>
       <% } %>
     </div>
@@ -101,4 +101,31 @@
     </div>
   </div>
 </div>
+
+<!-- Vote Progress Bar -->
+<div class="container my-4">
+  <div class="vote-progress-container">
+    <div class="vote-progress-label">
+      <span id="progressVoteCount">
+        <%= typeof voteCount !== 'undefined' ? voteCount.toLocaleString() : '0'
+        %>
+      </span>
+      votes of 500,000 goal
+    </div>
+    <div
+      class="progress"
+      role="progressbar"
+      aria-label="Vote progress"
+      aria-valuenow="<%= typeof voteCount !== 'undefined' ? voteCount : 0 %>"
+      aria-valuemin="0"
+      aria-valuemax="500000"
+    >
+      <div
+        class="progress-bar"
+        style="width: <%= typeof voteCount !== 'undefined' ? (voteCount / 500000 * 100) : 0 %>%;"
+      ></div>
+    </div>
+  </div>
+</div>
+
 <script src="/js/voting.js"></script>

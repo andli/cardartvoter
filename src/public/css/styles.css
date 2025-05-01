@@ -537,3 +537,42 @@ img.set-icon {
   vertical-align: middle;
   flex-shrink: 0;
 }
+
+/* Vote Progress Bar Styles */
+.vote-progress-container {
+  margin-bottom: 20px;
+}
+
+.vote-progress-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+  color: var(--dark-gray-color);
+}
+
+.progress {
+  height: 12px;
+  background-color: #e9ecef;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  background-color: var(--green-accent-color);
+  transition: width 0.6s ease;
+}
+
+@media (max-width: 767.98px) {
+  .vote-progress-container {
+    margin-bottom: 15px;
+  }
+
+  .vote-progress-label {
+    font-size: 0.8rem;
+  }
+
+  .progress {
+    height: 10px;
+  }
+}

@@ -144,8 +144,11 @@ async function importCardsWithRateLimiting(query) {
   }
 }
 
-exports.importSetWithRateLimiting = async (setCode) => {
+// Implementation of importSetWithRateLimiting
+async function importSetWithRateLimiting(setCode) {
   try {
+    console.log(`Starting import for set: ${setCode}`);
+
     // Check if this set should be filtered
     const setData = await Set.findOne({ code: setCode.toLowerCase() });
 
@@ -154,11 +157,98 @@ exports.importSetWithRateLimiting = async (setCode) => {
       return 0; // Return 0 cards added
     }
 
-    // Rest of your existing import code...
+    // Fetch cards for the specific set
+    console.log(`Fetching cards for set: ${setCode}`);
+
+    // Use pagination to handle large sets
+    let hasMore = true;
+    let nextPage = `https://api.scryfall.com/cards/search?q=set:${setCode}+is:booster+unique:art&order=set`;
+    let allCards = [];
+
+    while (hasMore) {
+      // Add delay to respect rate limits
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const response = await axios.get(nextPage);
+      const data = response.data;
+
+      allCards = allCards.concat(data.data);
+
+      if (data.has_more && data.next_page) {
+        console.log(
+          `Fetched ${allCards.length} cards so far, getting next page...`
+        );
+        nextPage = data.next_page;
+      } else {
+        hasMore = false;
+      }
+    }
+
+    console.log(`Found ${allCards.length} cards for set ${setCode}`);
+
+    // Import cards
+    let imported = 0;
+
+    for (const card of allCards) {
+      try {
+        // Skip cards without images or that are not unique art
+        if (!card.image_uris || !card.image_uris.normal) {
+          continue;
+        }
+
+        // Skip DFCs/Cards with multiple faces if we can't get their main image
+        if (card.layout === "transform" && !card.image_uris) {
+          continue;
+        }
+
+        // Check if already in DB
+        const exists = await Card.findOne({ scryfallId: card.id }).lean();
+        if (exists) {
+          continue;
+        }
+
+        // Create new card
+        const newCard = new Card({
+          name: card.name,
+          scryfallId: card.id,
+          artist: card.artist || "Unknown",
+          setName: card.set_name,
+          set: card.set,
+          collectorNumber: card.collector_number,
+          rarity: card.rarity,
+          enabled: true,
+          imageUrl: card.image_uris.normal,
+          rating: 1500,
+          comparisons: 0,
+        });
+
+        await newCard.save();
+        imported++;
+
+        // Log progress periodically
+        if (imported % 20 === 0) {
+          console.log(`Imported ${imported} cards so far for set ${setCode}`);
+        }
+      } catch (err) {
+        console.error(
+          `Error processing card ${card.name || "unknown"}:`,
+          err.message
+        );
+      }
+    }
+
+    console.log(
+      `Import completed for set ${setCode}. Added ${imported} new cards.`
+    );
+    return imported;
   } catch (error) {
-    console.error("Error during set import:", error);
+    console.error(`Error importing set ${setCode}:`, error);
     throw error;
   }
-};
+}
 
-module.exports = { importCardsWithRateLimiting };
+// Export both functions correctly
+module.exports = {
+  importCardsWithRateLimiting,
+  importSetWithRateLimiting,
+};

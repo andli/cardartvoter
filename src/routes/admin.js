@@ -1,7 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const { importSetWithRateLimiting } = require("../admin/importCards");
-const Card = require("../models/Card"); // Add this line to import the Card model
+const {
+  importSetWithRateLimiting,
+  importCardsWithRateLimiting,
+} = require("../admin/importCards");
+const Card = require("../models/Card");
 const Set = require("../models/Set");
 const storage = require("../utils/storage");
 const axios = require("axios");
@@ -42,15 +45,6 @@ router.post("/import-set", adminAuth, async (req, res) => {
       error: error.message,
     });
   }
-});
-
-// Keep the original route for local development only
-router.post("/import-cards", adminAuth, async (req, res) => {
-  res.json({
-    success: false,
-    message:
-      "Bulk import is disabled on Vercel due to serverless function limitations. Please use /admin/import-set?set=CODE instead.",
-  });
 });
 
 // Test route to check if admin route is working
@@ -308,6 +302,76 @@ router.post("/update-card-filters", adminAuth, async (req, res) => {
       message: "Failed to update card filters",
       error: error.message,
     });
+  }
+});
+
+// Import cards from all sets
+router.post("/import-all-sets", adminAuth, async (req, res) => {
+  try {
+    console.log("Starting import for all sets");
+
+    // Get all sets that aren't filtered
+    const sets = await Set.find({ shouldFilter: false }).lean();
+    console.log(`Found ${sets.length} sets to import`);
+
+    // Track progress
+    const results = {
+      totalSets: sets.length,
+      completedSets: 0,
+      failedSets: 0,
+      totalCardsAdded: 0,
+      failedSetCodes: [],
+    };
+
+    // Send initial response to avoid timeout
+    res.write(
+      JSON.stringify({
+        success: true,
+        message: `Started importing ${sets.length} sets. This process will continue in the background.`,
+        sets: sets.length,
+      })
+    );
+    res.end();
+
+    // Process sets sequentially to avoid rate limiting issues
+    for (const set of sets) {
+      try {
+        const setCode = set.code.toLowerCase();
+        console.log(
+          `Importing set ${setCode} (${results.completedSets + 1}/${
+            results.totalSets
+          })`
+        );
+
+        // Import the set
+        const added = await importSetWithRateLimiting(setCode);
+
+        // Update progress
+        results.completedSets++;
+        results.totalCardsAdded += added;
+
+        // Add delay between sets to avoid rate limiting
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        console.log(`Completed ${setCode}: Added ${added} cards`);
+      } catch (error) {
+        console.error(`Failed to import set ${set.code}:`, error);
+        results.failedSets++;
+        results.failedSetCodes.push(set.code);
+      }
+    }
+
+    // Log final results
+    console.log(
+      `Import all sets completed: ${results.completedSets} sets processed successfully, ${results.failedSets} failed`
+    );
+    console.log(`Total cards added: ${results.totalCardsAdded}`);
+
+    // Update stats after import
+    const statsService = require("../services/statsService");
+    await statsService.getCardCount(true);
+  } catch (error) {
+    console.error("Import all sets failed:", error);
   }
 });
 
