@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const expressLayouts = require("express-ejs-layouts");
 const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
+const appConfig = require("./config/app");
 require("dotenv").config();
 
 // Middleware
@@ -20,7 +21,7 @@ app.set("views", path.join(__dirname, "views"));
 const store = new MongoDBStore({
   uri: process.env.MONGODB_URI,
   collection: "sessions",
-  expires: 1000 * 60 * 60 * 24 * 7, // 1 week
+  expires: appConfig.session.storeExpiry, // Use centralized config
 });
 
 // Handle errors with the store
@@ -34,7 +35,7 @@ app.use(
     secret:
       process.env.SESSION_SECRET || "secure-random-string-for-cardartvoter",
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      maxAge: appConfig.session.cookieMaxAge, // Use centralized config
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax", // Changed back to "lax" for better security
       httpOnly: true,

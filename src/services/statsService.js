@@ -1,69 +1,18 @@
-const Stats = require("../models/Stats");
-const Card = require("../models/Card"); // Add direct model imports
-const Vote = require("../models/Vote"); // Add direct model imports
+const Card = require("../models/Card");
+const Vote = require("../models/Vote");
 const mongoose = require("mongoose");
-
-// Cache expiration time (5 minutes)
-const REFRESH_THRESHOLD = 5 * 60 * 1000;
+const cacheService = require("./cacheService");
+const appConfig = require("../config/app");
 
 const statsService = {
   /**
-   * Get a stat with time-based refresh
-   */
-  async getStat(key, countFn, force = false) {
-    try {
-      // Find existing stat
-      let stat = await Stats.findOne({ key });
-
-      // If no stat exists yet, create it with initial count
-      if (!stat) {
-        console.log(`Initial count for ${key}...`);
-        const initialValue = await countFn();
-        stat = await Stats.create({
-          key,
-          value: initialValue,
-          lastUpdated: new Date(),
-        });
-        return stat.value;
-      }
-
-      // Check if force refresh or timestamp is older than threshold
-      const now = Date.now();
-      const lastUpdated = new Date(stat.lastUpdated).getTime();
-
-      if (force || now - lastUpdated > REFRESH_THRESHOLD) {
-        // Get fresh count
-        const freshValue = await countFn();
-
-        // Update the stat with new count and timestamp
-        await Stats.updateOne(
-          { key },
-          {
-            value: freshValue,
-            lastUpdated: new Date(),
-          }
-        );
-
-        return freshValue;
-      }
-
-      // Return cached value if it's fresh enough
-      return stat.value;
-    } catch (error) {
-      console.error(`Error getting stat ${key}:`, error);
-      return 0;
-    }
-  },
-
-  /**
-   * Get card count with auto-refresh when stale
+   * Get card count with MongoDB-based caching
    */
   async getCardCount(force = false) {
-    return this.getStat(
-      "cardCount",
+    return cacheService.getOrSet(
+      "stats:cardCount",
       async () => {
         try {
-          // Use the directly imported model
           const count = await Card.countDocuments();
           return count;
         } catch (error) {
@@ -76,11 +25,30 @@ const statsService = {
   },
 
   /**
-   * Get vote count with auto-refresh when stale
+   * Get count of enabled cards with MongoDB-based caching
+   */
+  async getEnabledCardCount(force = false) {
+    return cacheService.getOrSet(
+      "stats:enabledCardCount",
+      async () => {
+        try {
+          const count = await Card.countDocuments({ enabled: true });
+          return count;
+        } catch (error) {
+          console.error("Error counting enabled cards:", error);
+          return 0;
+        }
+      },
+      force
+    );
+  },
+
+  /**
+   * Get vote count with MongoDB-based caching
    */
   async getVoteCount(force = false) {
-    return this.getStat(
-      "voteCount",
+    return cacheService.getOrSet(
+      "stats:voteCount",
       async () => {
         try {
           // Sum all comparisons across cards
@@ -105,6 +73,14 @@ const statsService = {
       },
       force
     );
+  },
+
+  /**
+   * Invalidate all stats caches when data changes
+   * Use this after bulk operations or significant changes
+   */
+  async invalidateAllStats() {
+    await cacheService.invalidatePattern(/^stats:/);
   },
 };
 

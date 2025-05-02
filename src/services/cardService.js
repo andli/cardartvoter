@@ -1,6 +1,8 @@
 // This file contains business logic related to card operations, such as fetching cards from the Scryfall API.
 
 const Card = require("../models/Card");
+const statsService = require("./statsService");
+const appConfig = require("../config/app");
 
 /**
  * Get a pair of cards for voting comparison
@@ -47,9 +49,10 @@ exports.getCardPair = async (targetCardId = null) => {
 
     // Random number to determine selection strategy
     const strategy = Math.random();
+    const { randomPairChance, topCardPairChance } = appConfig.pairing;
 
-    // Strategy 1 (30%): Target top-rated cards for challenging
-    if (strategy < 0.3) {
+    // Strategy 1: Target top-rated cards for challenging
+    if (strategy < topCardPairChance) {
       // Get a card from the top 20
       const topCards = await Card.find({ enabled: true })
         .sort({ rating: -1 })
@@ -77,15 +80,15 @@ exports.getCardPair = async (targetCardId = null) => {
 
       return [featuredCard, challenger];
     }
-    // Strategy 2 (30%): Pure random selection
-    else if (strategy < 0.6) {
+    // Strategy 2: Pure random selection
+    else if (strategy < (topCardPairChance + randomPairChance)) {
       const randomCards = await Card.aggregate([
         { $match: { enabled: true } },
         { $sample: { size: 2 } },
       ]);
       return randomCards;
     }
-    // Strategy 3 (40%): Focus on under-represented cards (your existing strategy)
+    // Strategy 3: Focus on under-represented cards (your existing strategy)
     else {
       // Use the aggregation pipeline with $sample to get cards with fewer comparisons
       const lessSeenCards = await Card.aggregate([
@@ -138,12 +141,13 @@ exports.getCardByScryfallId = async (scryfallId) => {
   return await Card.findOne({ scryfallId }).lean();
 };
 
-// Add this function
-
+/**
+ * Get the total count of enabled cards (cached version)
+ */
 exports.getTotalCardCount = async () => {
   try {
-    const count = await Card.countDocuments({ enabled: true });
-    return count;
+    // Use the cached version from statsService
+    return await statsService.getEnabledCardCount();
   } catch (error) {
     console.error("Error getting card count:", error);
     throw error; // Let the middleware handle the error
