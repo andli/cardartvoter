@@ -6,11 +6,14 @@ Card Art Voter is a web app for deciding which art for a card game (starting wit
 
 The idea is to let anonymous users see two cards and then click on the one they like best. After voting for a card, a new pair is shown and the user can keep clicking as long as they like. Over time, all cards in the card pool will have been compared and the site will display a full ranking.
 
-Clicking on the card to vote for it should show the change in ranking for the winning card and then load a new pair of cards.
-
 After a while (a month?) the ranking could be reset and historical rankings can be saved and browsed through.
 
 Card art and data like unique id numbers for cards will be fetched from the Scryfall API. We adhere to Scryfall's Rate Limits and Good Citizenship.
+
+Note that these sets have been excluded:
+
+- sunf (Unfinity Sticker Sheets)
+- cmb1 (Mystery Booster Playtest Cards 2019)
 
 ## TODO
 
