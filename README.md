@@ -15,6 +15,10 @@ Note that these sets have been excluded:
 - sunf (Unfinity Sticker Sheets)
 - cmb1 (Mystery Booster Playtest Cards 2019)
 
+Candidates for being excluded:
+
+- art:"universes beyond" -art:"forgotten realms" -art:"romance-of-the-three-kingdoms"
+
 ## TODO
 
 - Ranking trends up/down
