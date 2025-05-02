@@ -9,6 +9,11 @@ exports.getHomePage = async (req, res) => {
   try {
     // Only accept ID parameter
     const targetCardId = req.query.target_card_id || null;
+    // if targetCardId starts with https, remove everything before the last slash (ease of use for Scryffall links)
+    if (targetCardId && targetCardId.startsWith("https://")) {
+      const parts = targetCardId.split("/");
+      targetCardId = parts[parts.length - 1];
+    }
 
     // Pass only the ID to cardService
     const cards = await cardService.getCardPair(targetCardId);
