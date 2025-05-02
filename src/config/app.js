@@ -26,8 +26,8 @@ module.exports = {
 
   // Pairing algorithm settings
   pairing: {
-    randomPairChance: 0.3, // 30% chance of pure random pairing
-    topCardPairChance: 0.3, // 30% chance of pairing featuring top-rated cards
+    randomPairChance: 0.4, // 30% chance of pure random pairing
+    topCardPairChance: 0.1, // 30% chance of pairing featuring top-rated cards
     ratingTolerance: 200, // Look for cards within +/- this rating range
   },
 
