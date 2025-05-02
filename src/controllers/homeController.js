@@ -8,7 +8,7 @@ const crypto = require("crypto");
 exports.getHomePage = async (req, res) => {
   try {
     // Only accept ID parameter
-    const targetCardId = req.query.target_card_id || null;
+    let targetCardId = req.query.target_card_id || null;
     // if targetCardId starts with https, remove everything before the last slash (ease of use for Scryffall links)
     if (targetCardId && targetCardId.startsWith("https://")) {
       const parts = targetCardId.split("/");

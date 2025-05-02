@@ -39,13 +39,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const pairId = pairIdElement.value;
-    
+
     // Find the other card in the pair
     const allCardElements = document.querySelectorAll(".voting-card");
     let otherCardId = null;
-    
+
     // Loop through all card elements to find the one that wasn't selected
-    allCardElements.forEach(card => {
+    allCardElements.forEach((card) => {
       if (card !== cardElement && card.dataset.cardId) {
         otherCardId = card.dataset.cardId;
       }
