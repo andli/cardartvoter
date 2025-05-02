@@ -81,7 +81,7 @@ exports.getCardPair = async (targetCardId = null) => {
       return [featuredCard, challenger];
     }
     // Strategy 2: Pure random selection
-    else if (strategy < (topCardPairChance + randomPairChance)) {
+    else if (strategy < topCardPairChance + randomPairChance) {
       const randomCards = await Card.aggregate([
         { $match: { enabled: true } },
         { $sample: { size: 2 } },

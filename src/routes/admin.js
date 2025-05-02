@@ -375,4 +375,54 @@ router.post("/import-all-sets", adminAuth, async (req, res) => {
   }
 });
 
+// Add this route to filter a specific set by code
+router.post("/filter-set", adminAuth, async (req, res) => {
+  try {
+    const setCode = req.body.set || req.query.set;
+
+    if (!setCode) {
+      return res.status(400).json({
+        success: false,
+        message: "Set code is required (e.g. ?set=woe for Wilds of Eldraine)",
+      });
+    }
+
+    console.log(`Admin request to filter set with code: ${setCode}`);
+
+    // Find and update the set
+    const result = await Set.findOneAndUpdate(
+      { code: setCode.toLowerCase() },
+      { $set: { shouldFilter: true } },
+      { new: true }
+    );
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: `Set with code ${setCode} not found`,
+      });
+    }
+
+    // Also disable all cards from this set
+    const cardResult = await Card.updateMany(
+      { set: setCode.toLowerCase() },
+      { $set: { enabled: false } }
+    );
+
+    res.json({
+      success: true,
+      message: `Set ${setCode} (${result.name}) has been marked as filtered`,
+      set: result,
+      cardsDisabled: cardResult.modifiedCount,
+    });
+  } catch (error) {
+    console.error("Error filtering set:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to filter set",
+      error: error.message,
+    });
+  }
+});
+
 module.exports = router;
