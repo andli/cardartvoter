@@ -576,7 +576,6 @@ img.set-icon {
     height: 10px;
   }
 }
-
-.accordion-item .accordion-header {
+.accordion-header button.accordion-button {
   font-weight: bold;
 }
