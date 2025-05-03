@@ -6,26 +6,30 @@
       "use": "@vercel/node"
     },
     {
-      "src": "src/public/**",
+      "src": "src/public/**/*",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
+      "src": "/images/set-icons/([^/]+)\\.svg",
+      "dest": "/src/public/images/set-icons/$1.svg"
+    },
+    {
       "src": "/images/(.*)",
-      "dest": "src/public/images/$1"
+      "dest": "/src/public/images/$1"
     },
     {
       "src": "/js/(.*)",
-      "dest": "src/public/js/$1"
+      "dest": "/src/public/js/$1"
     },
     {
       "src": "/css/(.*)",
-      "dest": "src/public/css/$1"
+      "dest": "/src/public/css/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "src/app.js"
+      "dest": "/src/app.js"
     }
   ]
 }

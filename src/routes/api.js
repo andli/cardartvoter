@@ -146,41 +146,48 @@ router.post("/vote", async (req, res) => {
 
     // Get the selected card
     const selectedCard = await Card.findOne({ scryfallId: selectedCardId });
-    
+
     if (!selectedCard) {
       return res.status(404).json({ message: "Selected card not found" });
     }
-    
+
     // Get the other card in the pair - either from the request body or from the session
     let otherCard;
-    
+
     // If the client explicitly provided the other card ID
     if (otherCardId) {
       otherCard = await Card.findOne({ scryfallId: otherCardId });
     }
     // Try to get the other card from the session
-    else if (req.session.currentPair && 
-        (req.session.currentPair.card1 === selectedCardId || req.session.currentPair.card2 === selectedCardId)) {
+    else if (
+      req.session.currentPair &&
+      (req.session.currentPair.card1 === selectedCardId ||
+        req.session.currentPair.card2 === selectedCardId)
+    ) {
       // Get the other card ID from the pair
-      const otherCardScryfallId = 
-        req.session.currentPair.card1 === selectedCardId 
-          ? req.session.currentPair.card2 
+      const otherCardScryfallId =
+        req.session.currentPair.card1 === selectedCardId
+          ? req.session.currentPair.card2
           : req.session.currentPair.card1;
-      
+
       otherCard = await Card.findOne({ scryfallId: otherCardScryfallId });
     }
-    
+
     // If we still don't have the other card, try to find any other card as a fallback
     if (!otherCard) {
-      console.warn("Could not find the other card in the pair, using fallback method");
-      otherCard = await Card.findOne({ 
-        scryfallId: { $ne: selectedCardId }, 
-        enabled: true 
+      console.warn(
+        "Could not find the other card in the pair, using fallback method"
+      );
+      otherCard = await Card.findOne({
+        scryfallId: { $ne: selectedCardId },
+        enabled: true,
       });
     }
 
     if (!otherCard) {
-      return res.status(404).json({ message: "Could not find the other card in the pair" });
+      return res
+        .status(404)
+        .json({ message: "Could not find the other card in the pair" });
     }
 
     // Set the winning and losing cards based on the vote
@@ -342,6 +349,46 @@ router.get("/debug/card-check", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Add this debug route to check if set icon files exist
+router.get("/debug/set-icons", async (req, res) => {
+  try {
+    const fs = require("fs").promises;
+    const path = require("path");
+
+    const iconDir = path.join(__dirname, "../public/images/set-icons");
+
+    try {
+      // Try to list the directory contents
+      const files = await fs.readdir(iconDir);
+
+      // Return information about the directory
+      res.json({
+        success: true,
+        message: `Found ${files.length} set icon files`,
+        exampleFiles: files.slice(0, 10),
+        iconDir: iconDir,
+        nodeEnv: process.env.NODE_ENV || "development",
+      });
+    } catch (err) {
+      res.json({
+        success: false,
+        message: `Error reading set icons directory: ${err.message}`,
+        iconDir: iconDir,
+        error: err.toString(),
+        nodeEnv: process.env.NODE_ENV || "development",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+      stack:
+        process.env.NODE_ENV === "production"
+          ? "Hidden in production"
+          : error.stack,
+    });
   }
 });
 
