@@ -14,6 +14,7 @@ Note that these sets have been excluded:
 
 - sunf (Unfinity Sticker Sheets)
 - cmb1 (Mystery Booster Playtest Cards 2019)
+- dbl (Innistrad: Double Feature)
 
 Candidates for being excluded:
 
