@@ -9,6 +9,9 @@ router.get("/", homeController.getHomePage);
 // Full Rankings page
 router.get("/rankings", rankingController.displayRankings);
 
+// FAQ page
+router.get("/faq", homeController.getFaqPage);
+
 // API routes
 router.use("/api", require("./api"));
 

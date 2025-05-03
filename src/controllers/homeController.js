@@ -69,3 +69,19 @@ exports.getHomePage = async (req, res) => {
     });
   }
 };
+
+// FAQ page handler
+exports.getFaqPage = (req, res) => {
+  try {
+    res.render("faq", {
+      title: "FAQ",
+    });
+  } catch (error) {
+    console.error("Error loading FAQ page:", error);
+    res.status(500).render("error", {
+      title: "Error",
+      message: "Error loading FAQ page",
+      error,
+    });
+  }
+};

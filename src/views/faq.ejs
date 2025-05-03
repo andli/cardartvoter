@@ -1,0 +1,218 @@
+<%# The correct way to use express-ejs-layouts - content will be injected into
+layout automatically %>
+
+<div class="container py-5">
+  <h1 class="mb-4">Frequently Asked Questions</h1>
+
+  <div class="accordion" id="faqAccordion">
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingZero">
+        <button
+          class="accordion-button"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseZero"
+          aria-expanded="true"
+          aria-controls="collapseZero"
+        >
+          Why not use art crops, if the focus is the art?
+        </button>
+      </h2>
+      <div
+        id="collapseZero"
+        class="accordion-collapse collapse show"
+        aria-labelledby="headingZero"
+        data-bs-parent="#faqAccordion"
+      >
+        <div class="accordion-body">
+          <p>
+            This was a tough decision, but I ultimately decided to use full
+            cards because:
+          </p>
+          <ul>
+            <li>
+              The card frame is most likely considered in WotC's art direction.
+            </li>
+            <li>
+              Full cards are more recognizable and thus gives this app more
+              general appeal.
+            </li>
+          </ul>
+          <p>
+            Having just art crops is an equally valid design choice, but to me
+            just did not feel right.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!-- Question 1 -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingOne">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseOne"
+          aria-expanded="false"
+          aria-controls="collapseOne"
+        >
+          How does the card art voting system work?
+        </button>
+      </h2>
+      <div
+        id="collapseOne"
+        class="accordion-collapse collapse"
+        aria-labelledby="headingOne"
+        data-bs-parent="#faqAccordion"
+      >
+        <div class="accordion-body">
+          <p>
+            Card Art Voter uses an Elo rating system, similar to what's used in
+            chess rankings. When you vote between two cards:
+          </p>
+          <ul>
+            <li>The winning card's rating increases</li>
+            <li>The losing card's rating decreases</li>
+            <li>
+              How much the ratings change depends on the current ratings of both
+              cards
+            </li>
+          </ul>
+          <p>The more you vote, the more accurate my rankings become!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Question 2 -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingTwo">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseTwo"
+          aria-expanded="false"
+          aria-controls="collapseTwo"
+        >
+          How are artist and set rankings calculated?
+        </button>
+      </h2>
+      <div
+        id="collapseTwo"
+        class="accordion-collapse collapse"
+        aria-labelledby="headingTwo"
+        data-bs-parent="#faqAccordion"
+      >
+        <div class="accordion-body">
+          <p>Artist and set rankings use a Bayesian average that considers:</p>
+          <ul>
+            <li>The average rating of the artist's or set's cards</li>
+            <li>The number of cards by that artist or in that set</li>
+            <li>
+              A baseline rating that ensures artists/sets with very few cards
+              aren't unfairly advantaged
+            </li>
+          </ul>
+          <p>
+            This provides a fair comparison between artists and sets with
+            different numbers of cards in my database.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Question 3 -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingThree">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseThree"
+          aria-expanded="false"
+          aria-controls="collapseThree"
+        >
+          Where do the card images come from?
+        </button>
+      </h2>
+      <div
+        id="collapseThree"
+        class="accordion-collapse collapse"
+        aria-labelledby="headingThree"
+        data-bs-parent="#faqAccordion"
+      >
+        <div class="accordion-body">
+          <p>
+            All card images are sourced from
+            <a
+              href="https://scryfall.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Scryfall</a
+            >, a comprehensive Magic: The Gathering card database. I use their
+            API to fetch:
+          </p>
+          <ul>
+            <li>Card art crops for thumbnails</li>
+            <li>Full card images for the detailed view</li>
+            <li>
+              Card metadata including artist information and set information
+            </li>
+          </ul>
+          <p>
+            I greatly appreciate Scryfall's resources which make this site
+            possible, and I follow their guidlines for using their API in a
+            considerate way.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Question 4 -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingFour">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseFour"
+          aria-expanded="false"
+          aria-controls="collapseFour"
+        >
+          Can I contribute to this project?
+        </button>
+      </h2>
+      <div
+        id="collapseFour"
+        class="accordion-collapse collapse"
+        aria-labelledby="headingFour"
+        data-bs-parent="#faqAccordion"
+      >
+        <div class="accordion-body">
+          <p>
+            Yes! The best way to contribute is simply by voting on more cards.
+            The more votes my system has, the more accurate the rankings
+            become.
+          </p>
+          <p>
+            If you're interested in contributing to the code or reporting
+            issues, please check out
+            <a href="https://github.com/andli/cardartvoter"
+              >my GitHub repository</a
+            >
+            and follow the contribution guidelines there.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%# Add the Bootstrap JS if it's not already included in your layout %>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Initialize any Bootstrap components if needed
+    const accordionItems = document.querySelectorAll(".accordion-button");
+    // No additional initialization needed for Bootstrap 5 accordions as they work automatically
+  });
+</script>
