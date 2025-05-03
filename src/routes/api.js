@@ -392,4 +392,22 @@ router.get("/debug/set-icons", async (req, res) => {
   }
 });
 
+// API endpoint to get the Vercel Blob URL for a set icon
+router.get("/set-icon-url", async (req, res) => {
+  try {
+    const { code } = req.query;
+    if (!code) {
+      return res.status(400).json({ error: "Set code is required" });
+    }
+
+    const storage = require("../utils/storage");
+    const url = await storage.getIconUrl(code);
+
+    res.json({ url });
+  } catch (error) {
+    console.error("Error getting set icon URL:", error);
+    res.status(500).json({ error: "Failed to get set icon URL" });
+  }
+});
+
 module.exports = router;

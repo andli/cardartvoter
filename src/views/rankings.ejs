@@ -308,7 +308,8 @@
                   <td>
                     <div class="set-name-container">
                       <img
-                        src="<%= getSetIconUrl(set.code) %>"
+                        src="<%= getSetIconUrlSync(set.code) %>"
+                        data-code="<%= set.code %>"
                         alt="<%= set.name %>"
                         class="set-icon"
                         onerror="this.src='/images/default-set-icon.svg';"
@@ -355,7 +356,8 @@
                   <td>
                     <div class="set-name-container">
                       <img
-                        src="<%= getSetIconUrl(set.code) %>"
+                        src="<%= getSetIconUrlSync(set.code) %>"
+                        data-code="<%= set.code %>"
                         alt="<%= set.name %>"
                         class="set-icon"
                         onerror="this.src='/images/default-set-icon.svg';"
@@ -386,3 +388,6 @@
     between sets with different numbers of cards.
   </div>
 </div>
+
+<!-- Include rankings.js which now also handles set icons -->
+<script src="/js/rankings.js"></script>

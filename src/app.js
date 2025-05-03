@@ -51,13 +51,23 @@ const indexRouter = require("./routes/home");
 const apiRouter = require("./routes/api");
 const adminRouter = require("./routes/admin");
 
-// Simplify the set icon middleware
-app.use((req, res, next) => {
-  // Just provide a simple function for set icons that uses local path
-  res.locals.getSetIconUrl = (code) => {
+// Use storage utility for set icons
+const storage = require("./utils/storage");
+
+// Set icon middleware
+app.use(async (req, res, next) => {
+  // Provide both async and sync versions for templates
+  res.locals.getSetIconUrl = async (code) => {
+    if (!code) return "/images/default-set-icon.svg";
+    return await storage.getIconUrl(code);
+  };
+
+  // Sync version falls back to default if we can't determine immediately
+  res.locals.getSetIconUrlSync = (code) => {
     if (!code) return "/images/default-set-icon.svg";
     return `/images/set-icons/${code.toLowerCase()}.svg`;
   };
+
   next();
 });
 
