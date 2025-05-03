@@ -577,6 +577,6 @@ img.set-icon {
   }
 }
 
-.accordion-header {
+.accordion-item .accordion-header {
   font-weight: bold;
 }
