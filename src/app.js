@@ -51,27 +51,13 @@ const indexRouter = require("./routes/home");
 const apiRouter = require("./routes/api");
 const adminRouter = require("./routes/admin");
 
-// Move this BEFORE your route registrations
-// Add near where you set up your other middleware (before routes)
-const storage = require("./utils/storage");
-
-// Modify the middleware to use the storage utility instead of hardcoded URLs
-app.use(async (req, res, next) => {
-  const storage = require("./utils/storage");
-
-  // Use an async function that will use the storage utility with fallbacks
-  res.locals.getSetIconUrl = async (code) => {
+// Simplify the set icon middleware
+app.use((req, res, next) => {
+  // Just provide a simple function for set icons that uses local path
+  res.locals.getSetIconUrl = (code) => {
     if (!code) return "/images/default-set-icon.svg";
-    return await storage.getIconUrl(code);
-  };
-
-  // Provide a synchronous version with Scryfall fallback for immediate rendering
-  res.locals.getSetIconUrlSync = (code) => {
-    if (!code) return "/images/default-set-icon.svg";
-    // Use local path but allow image error handler to fallback to Scryfall
     return `/images/set-icons/${code.toLowerCase()}.svg`;
   };
-
   next();
 });
 
