@@ -30,6 +30,7 @@ exports.displayRankings = async (req, res) => {
       bottomSets, // Add this
       getArtCropUrl: imageHelpers.getArtCropUrl,
       getCardUrl: imageHelpers.getCardUrl,
+      getSetIconPath: (code) => `/images/set-icons/${code.toLowerCase()}.svg`, // For backward compatibility
     });
   } catch (error) {
     console.error("Error getting rankings:", error);

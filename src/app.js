@@ -55,20 +55,23 @@ const adminRouter = require("./routes/admin");
 // Add near where you set up your other middleware (before routes)
 const storage = require("./utils/storage");
 
-// Make helper functions available in all templates
-app.use((req, res, next) => {
-  res.locals.getSetIconPath = (code) => {
+// Modify the middleware to use the storage utility instead of hardcoded URLs
+app.use(async (req, res, next) => {
+  const storage = require("./utils/storage");
+
+  // Use an async function that will use the storage utility
+  res.locals.getSetIconUrl = async (code) => {
     if (!code) return "/images/default-set-icon.svg";
+    return await storage.getIconUrl(code);
+  };
 
-    // In production, use Scryfall's CDN directly instead of our own paths
-    // This bypasses our storage layer entirely for faster page loads
-    if (process.env.NODE_ENV === "production") {
-      return `https://svgs.scryfall.io/sets/${code.toLowerCase()}.svg`;
-    }
-
-    // In development, use local files
+  // Also provide a synchronous version that defaults to local path for immediate rendering
+  // The async version can update the src attribute once loaded
+  res.locals.getSetIconUrlSync = (code) => {
+    if (!code) return "/images/default-set-icon.svg";
     return `/images/set-icons/${code.toLowerCase()}.svg`;
   };
+
   next();
 });
 
