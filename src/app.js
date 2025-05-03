@@ -59,16 +59,16 @@ const storage = require("./utils/storage");
 app.use(async (req, res, next) => {
   const storage = require("./utils/storage");
 
-  // Use an async function that will use the storage utility
+  // Use an async function that will use the storage utility with fallbacks
   res.locals.getSetIconUrl = async (code) => {
     if (!code) return "/images/default-set-icon.svg";
     return await storage.getIconUrl(code);
   };
 
-  // Also provide a synchronous version that defaults to local path for immediate rendering
-  // The async version can update the src attribute once loaded
+  // Provide a synchronous version with Scryfall fallback for immediate rendering
   res.locals.getSetIconUrlSync = (code) => {
     if (!code) return "/images/default-set-icon.svg";
+    // Use local path but allow image error handler to fallback to Scryfall
     return `/images/set-icons/${code.toLowerCase()}.svg`;
   };
 

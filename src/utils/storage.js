@@ -45,6 +45,7 @@ exports.getIconUrl = async (setCode) => {
       await fs.access(path.join(localIconsDir, iconName));
       return `/images/set-icons/${iconName}`;
     } catch (e) {
+      // Use local default icon
       return "/images/default-set-icon.svg";
     }
   } else {
@@ -52,23 +53,30 @@ exports.getIconUrl = async (setCode) => {
     try {
       // Refresh cache if needed
       if (!iconCache || Date.now() - cacheTimestamp > CACHE_DURATION) {
-        const { blobs } = await list({ prefix: "set-icons/" });
-        iconCache = {};
+        try {
+          const { blobs } = await list({ prefix: "set-icons/" });
+          iconCache = {};
 
-        for (const blob of blobs) {
-          const filename = blob.pathname.split("/").pop();
-          const code = filename.replace(".svg", "");
-          iconCache[code] = blob.url;
+          for (const blob of blobs) {
+            const filename = blob.pathname.split("/").pop();
+            const code = filename.replace(".svg", "");
+            iconCache[code] = blob.url;
+          }
+
+          cacheTimestamp = Date.now();
+        } catch (e) {
+          console.error("Error listing blobs:", e);
+          // In case of error, keep using the old cache if available
+          if (!iconCache) iconCache = {};
         }
-
-        cacheTimestamp = Date.now();
       }
 
-      // Return the icon URL from cache or default
+      // Return the icon URL from cache or use default
       const code = setCode.toLowerCase();
       return iconCache[code] || "/images/default-set-icon.svg";
     } catch (e) {
       console.error("Error retrieving icon URL:", e);
+      // Use local default icon
       return "/images/default-set-icon.svg";
     }
   }

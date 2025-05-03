@@ -42,19 +42,3 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
-
-// Fix for set icons to ensure they load from local cache
-document.addEventListener("DOMContentLoaded", function () {
-  // Find all set icons that might be loading from external sources
-  const setIcons = document.querySelectorAll("img.set-icon");
-
-  setIcons.forEach((icon) => {
-    const src = icon.getAttribute("src");
-    // If it's trying to load from Scryfall
-    if (src && src.includes("svgs.scryfall.io")) {
-      const setCode = src.split("/").pop().replace(".svg", "");
-      // Replace with local path
-      icon.setAttribute("src", `/images/set-icons/${setCode}.svg`);
-    }
-  });
-});
