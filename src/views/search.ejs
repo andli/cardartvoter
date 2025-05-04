@@ -1,0 +1,357 @@
+<%# Search page with autocomplete functionality %>
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-8">
+      <div class="card">
+        <div class="card-body">
+          <div class="search-container mb-4">
+            <div class="form-group">
+              <label for="searchInput" class="form-label"
+                >Search for a card by name (beta functionality, use at own
+                risk):</label
+              >
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="searchInput"
+                  placeholder="Start typing a card name..."
+                  autocomplete="off"
+                />
+                <button class="btn btn-primary" id="searchButton">
+                  <i class="fas fa-search"></i>
+                </button>
+              </div>
+              <div id="autocompleteResults" class="autocomplete-results"></div>
+            </div>
+          </div>
+
+          <div id="searchResults" class="search-results mt-4">
+            <!-- Results will appear here -->
+            <div class="initial-state text-center text-muted">
+              <p><i class="fas fa-search fa-2x mb-3"></i></p>
+              <p>Type a card name above to find its ranking</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Add this rule to fix the dropdown visibility */
+  .card {
+    overflow: visible;
+  }
+
+  .form-group {
+    position: relative;
+  }
+
+  .autocomplete-results {
+    position: absolute;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 9999; /* Very high z-index to ensure it's above everything */
+    border: 1px solid #ced4da;
+    border-top: none;
+    border-radius: 0 0 0.25rem 0.25rem;
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: none;
+    top: 100%; /* Position it directly below the input */
+    left: 0;
+  }
+
+  .autocomplete-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .autocomplete-item:hover {
+    background-color: #f8f9fa;
+  }
+
+  .autocomplete-item:last-child {
+    border-bottom: none;
+  }
+
+  .autocomplete-item img {
+    width: 30px;
+    height: 30px;
+    object-fit: cover;
+    border-radius: 3px;
+    margin-right: 10px;
+  }
+
+  /* The rest of your CSS styles remain unchanged */
+  .card-result {
+    display: flex;
+    margin-bottom: 15px;
+    align-items: center;
+  }
+
+  .card-result-image {
+    width: 100px;
+    margin-right: 15px;
+  }
+
+  .card-result-details {
+    flex: 1;
+  }
+
+  .card-result-rank {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-left: 15px;
+    color: #2c3e50;
+  }
+
+  .card-result-stat {
+    margin-bottom: 5px;
+  }
+
+  .card-thumbnail-container {
+    position: relative;
+  }
+
+  @media (max-width: 767.98px) {
+    .card-result {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .card-result-image {
+      margin-right: 0;
+      margin-bottom: 15px;
+      width: 150px;
+    }
+
+    .card-result-rank {
+      margin-left: 0;
+      margin-top: 10px;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("searchInput");
+    const autocompleteResults = document.getElementById("autocompleteResults");
+    const searchResults = document.getElementById("searchResults");
+    const searchButton = document.getElementById("searchButton");
+
+    let typingTimer;
+    const doneTypingInterval = 300; // Wait time after typing stops (ms)
+
+    // Event listeners
+    searchInput.addEventListener("input", handleInput);
+    searchInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        searchCard();
+      }
+    });
+    searchButton.addEventListener("click", searchCard);
+
+    // Hide autocomplete when clicking outside
+    document.addEventListener("click", function (e) {
+      if (
+        !searchInput.contains(e.target) &&
+        !autocompleteResults.contains(e.target)
+      ) {
+        autocompleteResults.style.display = "none";
+      }
+    });
+
+    function handleInput() {
+      clearTimeout(typingTimer);
+      const query = searchInput.value.trim();
+
+      if (query.length < 2) {
+        autocompleteResults.style.display = "none";
+        return;
+      }
+
+      typingTimer = setTimeout(() => {
+        fetchAutocompleteResults(query);
+      }, doneTypingInterval);
+    }
+
+    function fetchAutocompleteResults(query) {
+      fetch(`/api/search/autocomplete?q=${encodeURIComponent(query)}`)
+        .then((response) => response.json())
+        .then((data) => {
+          displayAutocompleteResults(data);
+        })
+        .catch((error) => {
+          console.error("Error fetching autocomplete results:", error);
+        });
+    }
+
+    function displayAutocompleteResults(cards) {
+      autocompleteResults.innerHTML = "";
+
+      if (cards.length === 0) {
+        autocompleteResults.style.display = "none";
+        return;
+      }
+
+      cards.forEach((card) => {
+        const item = document.createElement("div");
+        item.className = "autocomplete-item";
+
+        const img = document.createElement("img");
+        img.src = getArtCropUrl(card.scryfallId);
+        img.alt = card.name;
+        img.onerror = function () {
+          this.src = "/api/card-back-thumb";
+        };
+
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = card.name;
+
+        item.appendChild(img);
+        item.appendChild(nameSpan);
+
+        item.addEventListener("click", () => {
+          searchInput.value = card.name;
+          autocompleteResults.style.display = "none";
+          fetchCardDetails(card.scryfallId);
+        });
+
+        autocompleteResults.appendChild(item);
+      });
+
+      autocompleteResults.style.display = "block";
+    }
+
+    function searchCard() {
+      const query = searchInput.value.trim();
+      if (query.length < 2) return;
+
+      fetch(`/api/search?q=${encodeURIComponent(query)}`)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data && data.scryfallId) {
+            fetchCardDetails(data.scryfallId);
+          } else {
+            searchResults.innerHTML = `
+            <div class="alert alert-info">
+              No cards found matching "${query}". Try another search term.
+            </div>
+          `;
+          }
+        })
+        .catch((error) => {
+          console.error("Error searching for card:", error);
+          searchResults.innerHTML = `
+          <div class="alert alert-danger">
+            Error searching for cards. Please try again later.
+          </div>
+        `;
+        });
+    }
+
+    function fetchCardDetails(scryfallId) {
+      fetch(`/api/card/${scryfallId}/ranking`)
+        .then((response) => response.json())
+        .then((data) => {
+          displayCardDetails(data);
+        })
+        .catch((error) => {
+          console.error("Error fetching card details:", error);
+          searchResults.innerHTML = `
+          <div class="alert alert-danger">
+            Error retrieving card details. Please try again later.
+          </div>
+        `;
+        });
+    }
+
+    function displayCardDetails(data) {
+      const { card, ranking } = data;
+
+      // Format the rating with 2 decimal places
+      const formattedRating = parseFloat(card.rating).toFixed(0);
+
+      // Calculate percentile (if we have totalCards)
+      let percentile = "";
+      if (ranking && ranking.totalCards > 0) {
+        const percent = 100 - (ranking.rank / ranking.totalCards) * 100;
+        percentile = `(Top ${percent.toFixed(1)}%)`;
+      }
+
+      searchResults.innerHTML = `
+      <div class="card-result">
+        <div class="card-result-image">
+          <div class="card-thumbnail-container">
+            <img 
+              src="${getCardUrl(card.scryfallId)}" 
+              alt="${card.name}" 
+              class="img-fluid rounded"
+              onerror="this.onerror=null; this.src='/api/card-back';"
+            >
+            <img
+              src="${getCardUrl(card.scryfallId)}"
+              alt="${card.name}"
+              class="card-full-preview"
+              loading="lazy"
+            >
+          </div>
+        </div>
+        <div class="card-result-details">
+          <h4>${card.name}</h4>
+          <div class="card-result-stat">
+            <strong>Artist:</strong> ${card.artist || "Unknown"}
+          </div>
+          <div class="card-result-stat">
+            <strong>Set:</strong> 
+            <span class="set-name-container">
+              <img 
+                src="${getSetIconUrl(card.setCode)}" 
+                alt="${card.setName}" 
+                class="set-icon" 
+                onerror="this.style.display='none'"
+              >
+              ${card.setName}
+            </span>
+          </div>
+          <div class="card-result-stat">
+            <strong>Rating:</strong> ${formattedRating}
+          </div>
+          <div class="card-result-stat">
+            <strong>Rank:</strong> #${
+              ranking ? ranking.rank.toLocaleString() : "N/A"
+            } ${percentile}
+          </div>
+        </div>
+        <div class="card-result-rank">
+          #${ranking ? ranking.rank : "?"}
+        </div>
+      </div>
+      <div class="text-center text-muted mt-3">
+        <p>${card.scryfallId}</p>
+      </div>
+    `;
+    }
+
+    function getArtCropUrl(scryfallId) {
+      return `https://api.scryfall.com/cards/${scryfallId}?format=image&version=art_crop`;
+    }
+
+    function getCardUrl(scryfallId) {
+      return `https://api.scryfall.com/cards/${scryfallId}?format=image`;
+    }
+
+    function getSetIconUrl(setCode) {
+      if (!setCode) return "/images/default-set-icon.svg";
+      return `/images/set-icons/${setCode.toLowerCase()}.svg`;
+    }
+  });
+</script>

@@ -410,4 +410,101 @@ router.get("/set-icon-url", async (req, res) => {
   }
 });
 
+// Search autocomplete endpoint
+router.get("/search/autocomplete", async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query || query.length < 2) {
+      return res.json([]);
+    }
+
+    // Create a case-insensitive regex for the search
+    const searchRegex = new RegExp(query, "i");
+
+    // Find cards that match the search query
+    const results = await Card.find({
+      enabled: true,
+      name: searchRegex,
+    })
+      .select("name scryfallId artist setName setCode")
+      .sort("name")
+      .limit(10)
+      .lean();
+
+    res.json(results);
+  } catch (error) {
+    console.error("Error in search autocomplete:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Search for a specific card by name
+router.get("/search", async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query || query.length < 2) {
+      return res.status(400).json({ message: "Search query too short" });
+    }
+
+    // Create a case-insensitive regex for the search
+    const searchRegex = new RegExp(query, "i");
+
+    // Find the card that best matches the search query
+    const card = await Card.findOne({
+      enabled: true,
+      name: searchRegex,
+    })
+      .sort("name")
+      .lean();
+
+    if (!card) {
+      return res
+        .status(404)
+        .json({ message: "No card found matching that name" });
+    }
+
+    res.json(card);
+  } catch (error) {
+    console.error("Error in card search:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get ranking information for a specific card
+router.get("/card/:scryfallId/ranking", async (req, res) => {
+  try {
+    const { scryfallId } = req.params;
+
+    // Find the card by scryfallId
+    const card = await Card.findOne({ scryfallId, enabled: true }).lean();
+
+    if (!card) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+
+    // Get total cards for percentile calculation
+    const totalCards = await Card.countDocuments({ enabled: true });
+
+    // Get rank of the card (how many cards have higher rating)
+    const higherRated = await Card.countDocuments({
+      enabled: true,
+      rating: { $gt: card.rating },
+    });
+
+    // Add 1 to get the actual rank (1-based indexing)
+    const rank = higherRated + 1;
+
+    res.json({
+      card,
+      ranking: {
+        rank,
+        totalCards,
+      },
+    });
+  } catch (error) {
+    console.error("Error getting card ranking:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;

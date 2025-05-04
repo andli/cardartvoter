@@ -85,3 +85,19 @@ exports.getFaqPage = (req, res) => {
     });
   }
 };
+
+// Search page handler
+exports.getSearchPage = (req, res) => {
+  try {
+    res.render("search", {
+      title: "Search",
+    });
+  } catch (error) {
+    console.error("Error loading Search page:", error);
+    res.status(500).render("error", {
+      title: "Error",
+      message: "Error loading Search page",
+      error,
+    });
+  }
+};

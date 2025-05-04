@@ -12,6 +12,9 @@ router.get("/rankings", rankingController.displayRankings);
 // FAQ page
 router.get("/faq", homeController.getFaqPage);
 
+// Search page
+router.get("/search", homeController.getSearchPage);
+
 // API routes
 router.use("/api", require("./api"));
 
