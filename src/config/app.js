@@ -35,7 +35,7 @@ module.exports = {
   // Bayesian averaging settings
   bayesian: {
     minCardCount: 8, // Minimum cards required for an artist/set to be ranked
-    confidenceDivisor: 30, // Used in confidence score calculation (cardCount/confidenceDivisor)
+    confidenceDivisor: 40, // Used in confidence score calculation (cardCount/confidenceDivisor)
     minCValue: 25, // Minimum C value for the Bayesian average formula
     cValueScaleFactor: 0.001, // Factor for scaling C value with database size (totalCards * factor)
   },
