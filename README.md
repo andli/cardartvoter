@@ -35,7 +35,7 @@ The ranking algorithm is Elo:
 - New cards can enter the pool without disrupting the overall system
 - Partial data still produces useful rankings
 
-Initial Rating: Start all cards at 1200 or 1500 points
+Initial Rating: Start all cards at 2500 points
 K-Factor: Use a higher K-factor (32-64) for new cards and lower (16-24) for established ones
 Confidence Tracking: Record the number of comparisons for each card
 

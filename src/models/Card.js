@@ -31,7 +31,7 @@ const cardSchema = new mongoose.Schema(
     // Voting system data
     rating: {
       type: Number,
-      default: 1500,
+      default: 2500, // Updated starting rating for expanded range
       index: true,
     },
     comparisons: {
