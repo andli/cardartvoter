@@ -172,10 +172,12 @@
       }
     });
 
-    // Event delegation for copy button
+    // Event delegation for copy button - improved to detect clicks on the icon
     searchResults.addEventListener("click", function (e) {
-      if (e.target.classList.contains("copy-btn")) {
-        const scryfallId = e.target.getAttribute("data-scryfall-id");
+      // Find the closest parent with copy-btn class (or the element itself)
+      const copyBtn = e.target.closest(".copy-btn");
+      if (copyBtn) {
+        const scryfallId = copyBtn.getAttribute("data-scryfall-id");
         copyToClipboard(scryfallId);
       }
     });
