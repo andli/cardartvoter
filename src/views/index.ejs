@@ -98,6 +98,162 @@
           <% } %>
         </div>
       </div>
+
+      <!-- Vote History Panel -->
+      <div class="card mt-3">
+        <div class="card-header">
+          <h2 class="h5 mb-0">Your Recent Votes</h2>
+        </div>
+        <div class="card-body p-0">
+          <% if (voteHistory && voteHistory.length > 0) { %>
+          <ul class="list-group list-group-flush">
+            <% voteHistory.forEach((vote, index) => { %>
+            <li class="list-group-item">
+              <div class="d-flex justify-content-between align-items-center">
+                <% if (vote.leftCard && vote.rightCard) { %>
+                <!-- New format (leftCard/rightCard) -->
+                <!-- Left Card -->
+                <div class="d-flex align-items-center">
+                  <a
+                    href="https://scryfall.com/card/<%= vote.leftCard.id %>"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="d-flex align-items-center text-decoration-none"
+                  >
+                    <div class="card-thumbnail-container">
+                      <img
+                        src="<%= getArtCropUrl(vote.leftCard.id) %>"
+                        alt="<%= vote.leftCard.name %>"
+                        class="me-2 rounded"
+                        style="
+                          width: 40px;
+                          height: 40px;
+                          object-fit: cover;
+                          <%= vote.leftCard.isWinner ? 'border: 2px solid #28a745;' : '' %>
+                        "
+                        onerror="this.onerror=null; this.src='/api/card-back-thumb';"
+                      />
+                      <img
+                        src="<%= getCardUrl(vote.leftCard.id) %>"
+                        alt="<%= vote.leftCard.name %>"
+                        class="card-full-preview"
+                        loading="lazy"
+                      />
+                    </div>
+                    <span class="text-dark"><%= vote.leftCard.name %></span>
+                  </a>
+                </div>
+
+                <span class="mx-2">vs</span>
+
+                <!-- Right Card -->
+                <div class="d-flex align-items-center">
+                  <a
+                    href="https://scryfall.com/card/<%= vote.rightCard.id %>"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="d-flex align-items-center text-decoration-none"
+                  >
+                    <span class="text-dark"><%= vote.rightCard.name %></span>
+                    <div class="card-thumbnail-container">
+                      <img
+                        src="<%= getArtCropUrl(vote.rightCard.id) %>"
+                        alt="<%= vote.rightCard.name %>"
+                        class="ms-2 rounded"
+                        style="
+                          width: 40px;
+                          height: 40px;
+                          object-fit: cover;
+                          <%= vote.rightCard.isWinner ? 'border: 2px solid #28a745;' : '' %>
+                        "
+                        onerror="this.onerror=null; this.src='/api/card-back-thumb';"
+                      />
+                      <img
+                        src="<%= getCardUrl(vote.rightCard.id) %>"
+                        alt="<%= vote.rightCard.name %>"
+                        class="card-full-preview"
+                        loading="lazy"
+                      />
+                    </div>
+                  </a>
+                </div>
+                <% } else if (vote.winner && vote.loser) { %>
+                <!-- Old format (winner/loser) -->
+                <!-- Winner -->
+                <div class="d-flex align-items-center">
+                  <a
+                    href="https://scryfall.com/card/<%= vote.winner.id %>"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="d-flex align-items-center text-decoration-none"
+                  >
+                    <div class="card-thumbnail-container">
+                      <img
+                        src="<%= getArtCropUrl(vote.winner.id) %>"
+                        alt="<%= vote.winner.name %>"
+                        class="me-2 rounded"
+                        style="
+                          width: 40px;
+                          height: 40px;
+                          object-fit: cover;
+                          border: 2px solid #28a745;
+                        "
+                        onerror="this.onerror=null; this.src='/api/card-back-thumb';"
+                      />
+                      <img
+                        src="<%= getCardUrl(vote.winner.id) %>"
+                        alt="<%= vote.winner.name %>"
+                        class="card-full-preview"
+                        loading="lazy"
+                      />
+                    </div>
+                    <span class="text-dark"><%= vote.winner.name %></span>
+                  </a>
+                </div>
+
+                <span class="mx-2">vs</span>
+
+                <!-- Loser -->
+                <div class="d-flex align-items-center">
+                  <a
+                    href="https://scryfall.com/card/<%= vote.loser.id %>"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="d-flex align-items-center text-decoration-none"
+                  >
+                    <span class="text-dark"><%= vote.loser.name %></span>
+                    <div class="card-thumbnail-container">
+                      <img
+                        src="<%= getArtCropUrl(vote.loser.id) %>"
+                        alt="<%= vote.loser.name %>"
+                        class="ms-2 rounded"
+                        style="width: 40px; height: 40px; object-fit: cover"
+                        onerror="this.onerror=null; this.src='/api/card-back-thumb';"
+                      />
+                      <img
+                        src="<%= getCardUrl(vote.loser.id) %>"
+                        alt="<%= vote.loser.name %>"
+                        class="card-full-preview"
+                        loading="lazy"
+                      />
+                    </div>
+                  </a>
+                </div>
+                <% } else { %>
+                <!-- Fallback for unknown format -->
+                <div class="text-center w-100">Vote data format unknown</div>
+                <% } %>
+              </div>
+            </li>
+            <% }) %>
+          </ul>
+          <% } else { %>
+          <p class="p-3 text-center">
+            No vote history yet.<br />Start voting to see your choices here!
+          </p>
+          <% } %>
+        </div>
+      </div>
     </div>
   </div>
 </div>

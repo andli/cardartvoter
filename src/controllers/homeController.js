@@ -55,7 +55,7 @@ exports.getHomePage = async (req, res) => {
       topRankings,
       hasCards: hasValidCards,
       pairId: pairId,
-      voteCount,
+      voteHistory: req.session.voteHistory || [], // Pass vote history to template
       getArtCropUrl: imageHelpers.getArtCropUrl,
       getSmallCardUrl: imageHelpers.getSmallCardUrl,
       getCardUrl: imageHelpers.getCardUrl,

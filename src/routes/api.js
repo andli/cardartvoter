@@ -1,6 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const Card = require("../models/Card");
+const voteController = require("../controllers/voteController");
+
+// Replace the existing POST /vote route with our controller
+router.post("/vote", voteController.submitVote);
+
+// Add new endpoint for fetching vote history
+router.get("/vote-history", voteController.getVoteHistory);
 
 // Get a smart pair of cards for comparison
 router.get("/cards/pair", async (req, res) => {
@@ -130,149 +137,6 @@ router.get("/cards/pair", async (req, res) => {
     }
   } catch (error) {
     console.error("Error fetching card pair:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// Submit a vote between two cards
-router.post("/vote", async (req, res) => {
-  try {
-    const { selectedCardId, pairId, otherCardId } = req.body;
-
-    // Check required parameters - we need both the selected card and the pair ID
-    if (!selectedCardId || !pairId) {
-      return res.status(400).json({ message: "Missing required parameters" });
-    }
-
-    // Get the selected card
-    const selectedCard = await Card.findOne({ scryfallId: selectedCardId });
-
-    if (!selectedCard) {
-      return res.status(404).json({ message: "Selected card not found" });
-    }
-
-    // Get the other card in the pair - either from the request body or from the session
-    let otherCard;
-
-    // If the client explicitly provided the other card ID
-    if (otherCardId) {
-      otherCard = await Card.findOne({ scryfallId: otherCardId });
-    }
-    // Try to get the other card from the session
-    else if (
-      req.session.currentPair &&
-      (req.session.currentPair.card1 === selectedCardId ||
-        req.session.currentPair.card2 === selectedCardId)
-    ) {
-      // Get the other card ID from the pair
-      const otherCardScryfallId =
-        req.session.currentPair.card1 === selectedCardId
-          ? req.session.currentPair.card2
-          : req.session.currentPair.card1;
-
-      otherCard = await Card.findOne({ scryfallId: otherCardScryfallId });
-    }
-
-    // If we still don't have the other card, try to find any other card as a fallback
-    if (!otherCard) {
-      console.warn(
-        "Could not find the other card in the pair, using fallback method"
-      );
-      otherCard = await Card.findOne({
-        scryfallId: { $ne: selectedCardId },
-        enabled: true,
-      });
-    }
-
-    if (!otherCard) {
-      return res
-        .status(404)
-        .json({ message: "Could not find the other card in the pair" });
-    }
-
-    // Set the winning and losing cards based on the vote
-    const winningCard = selectedCard;
-    const losingCard = otherCard;
-
-    // Determine K-factor based on combined comparison counts
-    const getKFactor = (winnerComps, loserComps) => {
-      const avgComps = (winnerComps + loserComps) / 2;
-      if (avgComps < 10) return 48; // New cards (reduced from 64)
-      if (avgComps < 30) return 32; // Establishing cards
-      if (avgComps < 100) return 24; // Established cards
-      return 16; // Well-established cards
-    };
-
-    // Use a single K factor for both cards
-    const K = getKFactor(winningCard.comparisons, losingCard.comparisons);
-
-    // Calculate expected scores with simpler approach
-    const ratingDiff = winningCard.rating - losingCard.rating;
-    const expectedWinner = 1 / (1 + Math.pow(10, -ratingDiff / 400));
-    const expectedLoser = 1 - expectedWinner;
-
-    // Calculate new ratings using the same K
-    const ratingChange = Math.round(K * (1 - expectedWinner));
-    winningCard.rating = Math.max(
-      1000,
-      Math.min(2000, winningCard.rating + ratingChange)
-    );
-    losingCard.rating = Math.max(
-      1000,
-      Math.min(2000, losingCard.rating - ratingChange)
-    );
-
-    // Track the number of comparisons
-    winningCard.comparisons += 1;
-    losingCard.comparisons += 1;
-
-    // Save changes
-    await winningCard.save();
-    await losingCard.save();
-
-    // Get a new card pair for the next round
-    const newPair = await Card.aggregate([
-      { $match: { enabled: true } },
-      { $sample: { size: 2 } },
-    ]);
-
-    // Generate a new pair ID
-    const newPairId = require("crypto").randomBytes(16).toString("hex");
-
-    // Store the new pair in session
-    req.session.currentPair = {
-      card1: newPair[0].scryfallId,
-      card2: newPair[1].scryfallId,
-      timestamp: Date.now(),
-      pairId: newPairId,
-    };
-
-    // Return ONE response with all the data
-    return res.json({
-      success: true,
-      result: {
-        winner: {
-          id: winningCard._id,
-          name: winningCard.name,
-          oldRating: winningCard.rating - ratingChange,
-          newRating: winningCard.rating,
-          change: ratingChange,
-        },
-        loser: {
-          id: losingCard._id,
-          name: losingCard.name,
-          oldRating: losingCard.rating + ratingChange,
-          newRating: losingCard.rating,
-          change: -ratingChange,
-        },
-      },
-      newPair: {
-        cards: newPair,
-        pairId: newPairId,
-      },
-    });
-  } catch (error) {
-    console.error("Error processing vote:", error);
     res.status(500).json({ message: "Server error" });
   }
 });

@@ -5,14 +5,6 @@ const statsService = require("../services/statsService");
 
 exports.submitVote = async (req, res) => {
   try {
-    // Enhanced logging for debugging
-    console.log("Vote received:", {
-      body: req.body,
-      sessionID: req.sessionID,
-      hasSession: !!req.session,
-      hasCurrentPair: req.session && !!req.session.currentPair,
-    });
-
     const { selectedCardId, pairId } = req.body;
 
     if (!selectedCardId || !pairId) {
@@ -119,8 +111,46 @@ exports.submitVote = async (req, res) => {
       req.session.currentPair
     );
 
-    // Get the current vote count
-    const voteCount = await statsService.getVoteCount();
+    // Initialize vote history array if it doesn't exist
+    if (!req.session.voteHistory) {
+      req.session.voteHistory = [];
+    }
+
+    // Get details of the cards from the current pair
+    const card1 = await cardService.getCardByScryfallId(
+      req.session.currentPair.card1
+    );
+    const card2 = await cardService.getCardByScryfallId(
+      req.session.currentPair.card2
+    );
+
+    // Determine which card is the winner and which is the loser
+    const isCard1Winner = selectedCardId === req.session.currentPair.card1;
+
+    // Add the current vote to history with position information
+    if (card1 && card2) {
+      const voteHistory = {
+        leftCard: {
+          id: card1.scryfallId,
+          name: card1.name,
+          isWinner: isCard1Winner,
+        },
+        rightCard: {
+          id: card2.scryfallId,
+          name: card2.name,
+          isWinner: !isCard1Winner,
+        },
+        timestamp: Date.now(),
+      };
+
+      // Add to front of array (newest first)
+      req.session.voteHistory.unshift(voteHistory);
+
+      // Keep only last 3 entries
+      if (req.session.voteHistory.length > 3) {
+        req.session.voteHistory = req.session.voteHistory.slice(0, 3);
+      }
+    }
 
     // Get a new card pair
     const newCards = await cardService.getCardPair();
@@ -152,35 +182,41 @@ exports.submitVote = async (req, res) => {
       pairId: newPairId,
     };
 
-    // Force session save to ensure it persists
-    await new Promise((resolve, reject) => {
-      req.session.save((err) => {
-        if (err) {
-          console.error("Failed to save session:", err);
-          // Continue anyway since we're returning the data
-        }
-        resolve();
-      });
-    });
-
-    // Return JSON with both the vote result and new cards
+    // Return JSON with both the vote result, new cards, and vote history
     return res.json({
       success: true,
       result: {
         selectedCard: selectedCardId,
         ratingChange: result.ratingChange || 0,
       },
-      voteCount: voteCount, // Include the total vote count
+      voteCount: await statsService.getVoteCount(), // Properly retrieve the vote count
       newPair: {
         cards: newCards,
         pairId: newPairId,
       },
+      voteHistory: req.session.voteHistory, // Include vote history in response
     });
   } catch (error) {
     console.error("Error processing vote:", error);
     return res.status(500).json({
       success: false,
       error: error.message || "Error processing vote",
+    });
+  }
+};
+
+// Add a new endpoint to get vote history
+exports.getVoteHistory = async (req, res) => {
+  try {
+    return res.json({
+      success: true,
+      voteHistory: req.session.voteHistory || [],
+    });
+  } catch (error) {
+    console.error("Error getting vote history:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Error retrieving vote history",
     });
   }
 };

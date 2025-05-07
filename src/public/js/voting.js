@@ -116,6 +116,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Update the cards with the new pair
         setTimeout(() => updateCardPair(data.newPair), 800);
+
+        // Update vote history from the same response
+        if (data.voteHistory) {
+          updateVoteHistory(data.voteHistory);
+        }
       } else {
         throw new Error(data.error || "Unknown error");
       }
@@ -203,5 +208,125 @@ document.addEventListener("DOMContentLoaded", function () {
         });
       });
     });
+  }
+
+  // Update vote history panel with new data
+  function updateVoteHistory(voteHistory) {
+    const historyPanel = document.querySelector(".card.mt-3");
+    if (!historyPanel) return;
+
+    const historyBody = historyPanel.querySelector(".card-body");
+    if (!historyBody) return;
+
+    if (voteHistory && voteHistory.length > 0) {
+      // Create HTML for vote history
+      let historyHTML = '<ul class="list-group list-group-flush">';
+
+      voteHistory.forEach((vote) => {
+        // Generate proper Scryfall URLs for images
+        const leftArtUrl = generateArtCropUrl(vote.leftCard.id);
+        const leftCardUrl = generateCardUrl(vote.leftCard.id);
+        const rightArtUrl = generateArtCropUrl(vote.rightCard.id);
+        const rightCardUrl = generateCardUrl(vote.rightCard.id);
+
+        // Determine which card has the winner styling (green border)
+        const leftCardBorder = vote.leftCard.isWinner
+          ? "border: 2px solid #28a745;"
+          : "";
+        const rightCardBorder = vote.rightCard.isWinner
+          ? "border: 2px solid #28a745;"
+          : "";
+
+        historyHTML += `
+          <li class="list-group-item">
+            <div class="d-flex justify-content-between align-items-center">
+              <!-- Left Card -->
+              <div class="d-flex align-items-center">
+                <a href="https://scryfall.com/card/${vote.leftCard.id}" 
+                   target="_blank" rel="noopener noreferrer" 
+                   class="d-flex align-items-center text-decoration-none">
+                  <div class="card-thumbnail-container">
+                    <img
+                      src="${leftArtUrl}" 
+                      alt="${vote.leftCard.name}" 
+                      class="me-2 rounded" 
+                      style="width: 40px; height: 40px; object-fit: cover; ${leftCardBorder}" 
+                      onerror="this.onerror=null; this.src='/api/card-back-thumb';"
+                    />
+                    <img
+                      src="${leftCardUrl}"
+                      alt="${vote.leftCard.name}"
+                      class="card-full-preview"
+                      loading="lazy"
+                    />
+                  </div>
+                  <span class="text-dark">${vote.leftCard.name}</span>
+                </a>
+              </div>
+              
+              <span class="mx-2">vs</span>
+              
+              <!-- Right Card -->
+              <div class="d-flex align-items-center">
+                <a href="https://scryfall.com/card/${vote.rightCard.id}" 
+                   target="_blank" rel="noopener noreferrer" 
+                   class="d-flex align-items-center text-decoration-none">
+                  <span class="text-dark">${vote.rightCard.name}</span>
+                  <div class="card-thumbnail-container">
+                    <img
+                      src="${rightArtUrl}" 
+                      alt="${vote.rightCard.name}" 
+                      class="ms-2 rounded" 
+                      style="width: 40px; height: 40px; object-fit: cover; ${rightCardBorder}" 
+                      onerror="this.onerror=null; this.src='/api/card-back-thumb';"
+                    />
+                    <img
+                      src="${rightCardUrl}"
+                      alt="${vote.rightCard.name}"
+                      class="card-full-preview"
+                      loading="lazy"
+                    />
+                  </div>
+                </a>
+              </div>
+            </div>
+          </li>
+        `;
+      });
+
+      historyHTML += "</ul>";
+      historyBody.innerHTML = historyHTML;
+    } else {
+      historyBody.innerHTML =
+        '<p class="p-3 text-center">No vote history yet.<br>Start voting to see your choices here!</p>';
+    }
+  }
+
+  // Helper function to generate art crop URLs (same as server-side getArtCropUrl)
+  function generateArtCropUrl(scryfallId) {
+    if (!scryfallId) return "/api/card-back-thumb";
+
+    try {
+      const firstChar = scryfallId.charAt(0);
+      const secondChar = scryfallId.charAt(1);
+      return `https://cards.scryfall.io/art_crop/front/${firstChar}/${secondChar}/${scryfallId}.jpg`;
+    } catch (err) {
+      console.error("Error generating art URL for", scryfallId, err);
+      return "/api/card-back-thumb";
+    }
+  }
+
+  // Helper function to generate card URLs (same as server-side getCardUrl)
+  function generateCardUrl(scryfallId) {
+    if (!scryfallId) return "/api/card-back";
+
+    try {
+      const firstChar = scryfallId.charAt(0);
+      const secondChar = scryfallId.charAt(1);
+      return `https://cards.scryfall.io/normal/front/${firstChar}/${secondChar}/${scryfallId}.jpg`;
+    } catch (err) {
+      console.error("Error generating card URL for", scryfallId, err);
+      return "/api/card-back";
+    }
   }
 });

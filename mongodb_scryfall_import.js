@@ -36,7 +36,6 @@ async function importCards() {
   const allCards = cardsResponse.data;
 
   // 3. Process cards
-  console.log(`Processing ${allCards.length} cards...`);
   const processedCards = allCards
     .filter((card) => card.image_uris && card.image_uris.normal)
     .map((card) => ({

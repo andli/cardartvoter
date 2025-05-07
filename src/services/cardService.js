@@ -138,12 +138,14 @@ exports.getCardPair = async (targetCardId = null) => {
  * Get a card by its Scryfall ID
  */
 exports.getCardByScryfallId = async (scryfallId) => {
-  return await Card.findOne({ scryfallId }).lean();
+  try {
+    return await Card.findOne({ scryfallId }).lean();
+  } catch (error) {
+    console.error(`Error getting card by scryfallId ${scryfallId}:`, error);
+    return null;
+  }
 };
 
-/**
- * Get the total count of enabled cards (cached version)
- */
 exports.getTotalCardCount = async () => {
   try {
     // Use the cached version from statsService
