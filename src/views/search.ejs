@@ -1,5 +1,8 @@
 <%# Search page with autocomplete functionality %>
 
+<!-- Include the clipboard utilities script at the top -->
+<script src="/js/clipboard-utils.js"></script>
+
 <div class="container py-5">
   <div class="row justify-content-center">
     <div class="col-12 col-md-8 col-lg-8">
@@ -166,6 +169,14 @@
         !autocompleteResults.contains(e.target)
       ) {
         autocompleteResults.style.display = "none";
+      }
+    });
+
+    // Event delegation for copy button
+    searchResults.addEventListener("click", function (e) {
+      if (e.target.classList.contains("copy-btn")) {
+        const scryfallId = e.target.getAttribute("data-scryfall-id");
+        copyToClipboard(scryfallId);
       }
     });
 
@@ -336,7 +347,14 @@
         </div>
       </div>
       <div class="text-center text-muted mt-3">
-        <p>${card.scryfallId}</p>
+        <div class="d-flex align-items-center justify-content-center">
+          <p class="mb-0 me-2" id="scryfall-id">${card.scryfallId}</p>
+          <button class="btn btn-sm btn-outline-secondary copy-btn" data-scryfall-id="${
+            card.scryfallId
+          }" title="Copy Scryfall ID">
+            <i class="fas fa-copy"></i>
+          </button>
+        </div>
       </div>
     `;
     }
