@@ -71,11 +71,8 @@ exports.getTopArtists = async (limit = 10) => {
     totalCards: result[0]?.totalCards || 0,
   }));
 
-  // Make C value scale with database size based on config values
-  const C = Math.max(
-    appConfig.bayesian.minCValue,
-    Math.floor(stats.totalCards * appConfig.bayesian.cValueScaleFactor)
-  );
+  // Use fixed C value for artists from config
+  const C = appConfig.bayesian.artistCValue;
 
   // First, get highest rated card for each artist
   const highestRatedCardsByArtist = await Card.aggregate([
@@ -114,7 +111,7 @@ exports.getTopArtists = async (limit = 10) => {
     { $match: { cardCount: { $gte: appConfig.bayesian.minCardCount } } },
     {
       $addFields: {
-        // Calculate Bayesian average with dynamic C value
+        // Calculate Bayesian average with fixed C value
         bayesianRating: {
           $divide: [
             {
@@ -167,11 +164,8 @@ exports.getBottomArtists = async (limit = 10) => {
     totalCards: result[0]?.totalCards || 0,
   }));
 
-  // Make C value scale with database size based on config values
-  const C = Math.max(
-    appConfig.bayesian.minCValue,
-    Math.floor(stats.totalCards * appConfig.bayesian.cValueScaleFactor)
-  );
+  // Use fixed C value for artists from config
+  const C = appConfig.bayesian.artistCValue;
 
   // First, get LOWEST rated card for each artist (changed from highest)
   const lowestRatedCardsByArtist = await Card.aggregate([
@@ -212,7 +206,7 @@ exports.getBottomArtists = async (limit = 10) => {
     { $match: { cardCount: { $gte: appConfig.bayesian.minCardCount } } },
     {
       $addFields: {
-        // Calculate Bayesian average with dynamic C value
+        // Calculate Bayesian average with fixed C value
         bayesianRating: {
           $divide: [
             {
@@ -283,11 +277,8 @@ exports.getTopSets = async (limit = 10) => {
     totalCards: result[0]?.totalCards || 0,
   }));
 
-  // Make C value scale with database size based on config values
-  const C = Math.max(
-    appConfig.bayesian.minCValue,
-    Math.floor(stats.totalCards * appConfig.bayesian.cValueScaleFactor)
-  );
+  // Use fixed C value for sets from config
+  const C = appConfig.bayesian.setCValue;
 
   // Get valid set codes first (those that shouldn't be filtered out)
   const validSets = await Set.find({ shouldFilter: false })
@@ -361,11 +352,8 @@ exports.getBottomSets = async (limit = 10) => {
     totalCards: result[0]?.totalCards || 0,
   }));
 
-  // Make C value scale with database size based on config values
-  const C = Math.max(
-    appConfig.bayesian.minCValue,
-    Math.floor(stats.totalCards * appConfig.bayesian.cValueScaleFactor)
-  );
+  // Use fixed C value for sets from config
+  const C = appConfig.bayesian.setCValue;
 
   // Get valid set codes first (those that shouldn't be filtered out)
   const validSets = await Set.find({ shouldFilter: false })
