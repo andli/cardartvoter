@@ -32,6 +32,14 @@ module.exports = {
     ratingTolerance: 200, // Look for cards within +/- this rating range
   },
 
+  // Bayesian averaging settings
+  bayesian: {
+    minCardCount: 8, // Minimum cards required for an artist/set to be ranked
+    confidenceDivisor: 30, // Used in confidence score calculation (cardCount/confidenceDivisor)
+    minCValue: 25, // Minimum C value for the Bayesian average formula
+    cValueScaleFactor: 0.001, // Factor for scaling C value with database size (totalCards * factor)
+  },
+
   // Session settings
   session: {
     cookieMaxAge: 24 * 60 * 60 * 1000, // 1 day

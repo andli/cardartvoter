@@ -1,6 +1,7 @@
 const Card = require("../models/Card");
-const Set = require("../models/Set"); // Add this import
+const Set = require("../models/Set");
 const mongoose = require("mongoose");
+const appConfig = require("../config/app");
 
 /**
  * Get top ranked cards
@@ -70,8 +71,11 @@ exports.getTopArtists = async (limit = 10) => {
     totalCards: result[0]?.totalCards || 0,
   }));
 
-  // Make C value scale with database size - minimum 40
-  const C = Math.max(25, Math.floor(stats.totalCards * 0.001));
+  // Make C value scale with database size based on config values
+  const C = Math.max(
+    appConfig.bayesian.minCValue,
+    Math.floor(stats.totalCards * appConfig.bayesian.cValueScaleFactor)
+  );
 
   // First, get highest rated card for each artist
   const highestRatedCardsByArtist = await Card.aggregate([
@@ -95,9 +99,6 @@ exports.getTopArtists = async (limit = 10) => {
     };
   });
 
-  // Set minimum card count for top rankings
-  const minCardCount = 10;
-
   // Get all artists with their ratings
   const artists = await Card.aggregate([
     { $match: { enabled: true, comparisons: { $gt: 0 } } },
@@ -109,8 +110,8 @@ exports.getTopArtists = async (limit = 10) => {
         cardCount: { $sum: 1 },
       },
     },
-    // Higher minimum card threshold
-    { $match: { cardCount: { $gte: minCardCount } } },
+    // Use minimum card threshold from config
+    { $match: { cardCount: { $gte: appConfig.bayesian.minCardCount } } },
     {
       $addFields: {
         // Calculate Bayesian average with dynamic C value
@@ -126,7 +127,10 @@ exports.getTopArtists = async (limit = 10) => {
           ],
         },
         confidenceScore: {
-          $min: [1, { $divide: ["$cardCount", 30] }],
+          $min: [
+            1,
+            { $divide: ["$cardCount", appConfig.bayesian.confidenceDivisor] },
+          ],
         },
       },
     },
@@ -163,8 +167,11 @@ exports.getBottomArtists = async (limit = 10) => {
     totalCards: result[0]?.totalCards || 0,
   }));
 
-  // Make C value scale with database size - minimum 40
-  const C = Math.max(25, Math.floor(stats.totalCards * 0.001));
+  // Make C value scale with database size based on config values
+  const C = Math.max(
+    appConfig.bayesian.minCValue,
+    Math.floor(stats.totalCards * appConfig.bayesian.cValueScaleFactor)
+  );
 
   // First, get LOWEST rated card for each artist (changed from highest)
   const lowestRatedCardsByArtist = await Card.aggregate([
@@ -190,9 +197,6 @@ exports.getBottomArtists = async (limit = 10) => {
     };
   });
 
-  // Set minimum card count for rankings
-  const minCardCount = 10;
-
   // Get all artists with their ratings
   const artists = await Card.aggregate([
     { $match: { enabled: true, comparisons: { $gt: 0 } } },
@@ -204,8 +208,8 @@ exports.getBottomArtists = async (limit = 10) => {
         cardCount: { $sum: 1 },
       },
     },
-    // Higher minimum card threshold
-    { $match: { cardCount: { $gte: minCardCount } } },
+    // Use minimum card threshold from config
+    { $match: { cardCount: { $gte: appConfig.bayesian.minCardCount } } },
     {
       $addFields: {
         // Calculate Bayesian average with dynamic C value
@@ -221,7 +225,10 @@ exports.getBottomArtists = async (limit = 10) => {
           ],
         },
         confidenceScore: {
-          $min: [1, { $divide: ["$cardCount", 30] }],
+          $min: [
+            1,
+            { $divide: ["$cardCount", appConfig.bayesian.confidenceDivisor] },
+          ],
         },
       },
     },
@@ -261,6 +268,27 @@ exports.getTopRankings = async (limit = 10) => {
 };
 
 exports.getTopSets = async (limit = 10) => {
+  // First get the global average rating
+  const stats = await Card.aggregate([
+    { $match: { enabled: true } },
+    {
+      $group: {
+        _id: null,
+        avgRating: { $avg: "$rating" },
+        totalCards: { $sum: 1 },
+      },
+    },
+  ]).then((result) => ({
+    globalAvg: result[0]?.avgRating || 1500,
+    totalCards: result[0]?.totalCards || 0,
+  }));
+
+  // Make C value scale with database size based on config values
+  const C = Math.max(
+    appConfig.bayesian.minCValue,
+    Math.floor(stats.totalCards * appConfig.bayesian.cValueScaleFactor)
+  );
+
   // Get valid set codes first (those that shouldn't be filtered out)
   const validSets = await Set.find({ shouldFilter: false })
     .select("code")
@@ -277,8 +305,6 @@ exports.getTopSets = async (limit = 10) => {
         setName: { $exists: true, $ne: null },
       },
     },
-
-    // Rest of your aggregation...
     {
       $group: {
         _id: "$setName",
@@ -288,8 +314,31 @@ exports.getTopSets = async (limit = 10) => {
         cardCount: { $sum: 1 },
       },
     },
-    { $match: { cardCount: { $gte: 5 } } },
-    { $sort: { avgRating: -1 } },
+    // Use configurable minimum card count for sets
+    { $match: { cardCount: { $gte: appConfig.bayesian.minCardCount } } },
+    {
+      $addFields: {
+        // Calculate Bayesian average
+        bayesianRating: {
+          $divide: [
+            {
+              $add: [
+                { $multiply: [C, stats.globalAvg] },
+                { $multiply: ["$avgRating", "$cardCount"] },
+              ],
+            },
+            { $add: [C, "$cardCount"] },
+          ],
+        },
+        confidenceScore: {
+          $min: [
+            1,
+            { $divide: ["$cardCount", appConfig.bayesian.confidenceDivisor] },
+          ],
+        },
+      },
+    },
+    { $sort: { bayesianRating: -1 } },
     { $limit: limit },
   ]);
 
@@ -297,6 +346,27 @@ exports.getTopSets = async (limit = 10) => {
 };
 
 exports.getBottomSets = async (limit = 10) => {
+  // First get the global average rating
+  const stats = await Card.aggregate([
+    { $match: { enabled: true } },
+    {
+      $group: {
+        _id: null,
+        avgRating: { $avg: "$rating" },
+        totalCards: { $sum: 1 },
+      },
+    },
+  ]).then((result) => ({
+    globalAvg: result[0]?.avgRating || 1500,
+    totalCards: result[0]?.totalCards || 0,
+  }));
+
+  // Make C value scale with database size based on config values
+  const C = Math.max(
+    appConfig.bayesian.minCValue,
+    Math.floor(stats.totalCards * appConfig.bayesian.cValueScaleFactor)
+  );
+
   // Get valid set codes first (those that shouldn't be filtered out)
   const validSets = await Set.find({ shouldFilter: false })
     .select("code")
@@ -313,8 +383,6 @@ exports.getBottomSets = async (limit = 10) => {
         setName: { $exists: true, $ne: null },
       },
     },
-
-    // Rest of your aggregation...
     {
       $group: {
         _id: "$setName",
@@ -324,8 +392,31 @@ exports.getBottomSets = async (limit = 10) => {
         cardCount: { $sum: 1 },
       },
     },
-    { $match: { cardCount: { $gte: 5 } } },
-    { $sort: { avgRating: 1 } }, // Note: different sort order for bottom
+    // Use configurable minimum card count for sets
+    { $match: { cardCount: { $gte: appConfig.bayesian.minCardCount } } },
+    {
+      $addFields: {
+        // Calculate Bayesian average
+        bayesianRating: {
+          $divide: [
+            {
+              $add: [
+                { $multiply: [C, stats.globalAvg] },
+                { $multiply: ["$avgRating", "$cardCount"] },
+              ],
+            },
+            { $add: [C, "$cardCount"] },
+          ],
+        },
+        confidenceScore: {
+          $min: [
+            1,
+            { $divide: ["$cardCount", appConfig.bayesian.confidenceDivisor] },
+          ],
+        },
+      },
+    },
+    { $sort: { bayesianRating: 1 } }, // Sort ascending for bottom sets
     { $limit: limit },
   ]);
 
