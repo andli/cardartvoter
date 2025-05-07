@@ -10,6 +10,10 @@ const voteSchema = new mongoose.Schema({
         type: String,
         required: false // Assuming votes can be anonymous
     },
+    metadata: {
+        type: mongoose.Schema.Types.Mixed, // Flexible field for additional data
+        required: false
+    },
     createdAt: {
         type: Date,
         default: Date.now

@@ -62,13 +62,16 @@ exports.processVote = async (selectedCardId, sessionPair) => {
     // Save changes to the database
     await Promise.all([winningCard.save(), losingCard.save()]);
 
-    // Record the vote
+    // Record the vote - Fix: use cardId field as required by Vote schema
     const vote = new Vote({
-      winningCardId: winningCard._id,
-      losingCardId: losingCard._id,
-      winningCardScryfallId: winningCard.scryfallId,
-      losingCardScryfallId: losingCard.scryfallId,
-      ratingChange: ratingChange,
+      cardId: winningCard._id, // This matches the schema definition
+      // Optional fields can be stored in a separate metadata field if needed
+      metadata: {
+        losingCardId: losingCard._id,
+        winningCardScryfallId: winningCard.scryfallId,
+        losingCardScryfallId: losingCard.scryfallId,
+        ratingChange: ratingChange,
+      },
     });
 
     await vote.save();
