@@ -22,6 +22,11 @@ const store = new MongoDBStore({
   uri: process.env.MONGODB_URI,
   collection: "sessions",
   expires: appConfig.session.storeExpiry, // Use centralized config
+  connectionOptions: {
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 10000,
+  },
+  touchAfter: 24 * 3600, // Only update session if data changed
 });
 
 // Handle errors with the store
@@ -37,12 +42,14 @@ app.use(
     cookie: {
       maxAge: appConfig.session.cookieMaxAge, // Use centralized config
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax", // Changed back to "lax" for better security
+      sameSite: "lax",
       httpOnly: true,
     },
     store: store,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false, // Change to false for better GDPR compliance
+    name: "cardartvoter.sid", // Specific session name to avoid conflicts
+    proxy: true, // Always enable proxy for Vercel
   })
 );
 

@@ -150,6 +150,19 @@ exports.submitVote = async (req, res) => {
       if (req.session.voteHistory.length > 3) {
         req.session.voteHistory = req.session.voteHistory.slice(0, 3);
       }
+
+      // Explicitly force save the session to ensure vote history persists
+      // This is critical for serverless environments like Vercel
+      await new Promise((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) {
+            console.error("Failed to save vote history to session store:", err);
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
     }
 
     // Get a new card pair
