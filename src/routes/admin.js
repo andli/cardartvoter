@@ -425,4 +425,98 @@ router.post("/filter-set", adminAuth, async (req, res) => {
   }
 });
 
+// Add this route to unfilter a specific set by code (allows including promo sets)
+router.post("/unfilter-set", adminAuth, async (req, res) => {
+  try {
+    const setCode = req.body.set || req.query.set;
+
+    if (!setCode) {
+      return res.status(400).json({
+        success: false,
+        message: "Set code is required (e.g. ?set=sld for Secret Lair Drop)",
+      });
+    }
+
+    console.log(`Admin request to unfilter set with code: ${setCode}`);
+
+    // Find the set first to get information
+    const set = await Set.findOne({ code: setCode.toLowerCase() });
+
+    if (!set) {
+      return res.status(404).json({
+        success: false,
+        message: `Set with code ${setCode} not found`,
+      });
+    }
+
+    // Check if it's a promo set (for informational purposes)
+    const isPromo = set.set_type === "promo";
+
+    // Update the set to not be filtered regardless of its type
+    const result = await Set.findOneAndUpdate(
+      { code: setCode.toLowerCase() },
+      { $set: { shouldFilter: false } },
+      { new: true }
+    );
+
+    // Also enable all cards from this set
+    const cardResult = await Card.updateMany(
+      { set: setCode.toLowerCase() },
+      { $set: { enabled: true } }
+    );
+
+    res.json({
+      success: true,
+      message: `Set ${setCode} (${result.name}) has been unfiltered${
+        isPromo ? " despite being a promo set" : ""
+      }`,
+      set: result,
+      cardsEnabled: cardResult.modifiedCount,
+      isPromo,
+    });
+  } catch (error) {
+    console.error("Error unfiltering set:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to unfilter set",
+      error: error.message,
+    });
+  }
+});
+
+// Add this route to list all filtered and promo sets
+router.get("/filtered-sets", adminAuth, async (req, res) => {
+  try {
+    // Get all sets, including filtering status and type
+    const sets = await Set.find({})
+      .select("code name set_type shouldFilter")
+      .lean();
+
+    // Separate into categories
+    const filteredSets = sets.filter((set) => set.shouldFilter);
+    const promoSets = sets.filter((set) => set.set_type === "promo");
+    const unfilteredPromoSets = promoSets.filter((set) => !set.shouldFilter);
+
+    res.json({
+      success: true,
+      stats: {
+        totalSets: sets.length,
+        filteredSets: filteredSets.length,
+        promoSets: promoSets.length,
+        unfilteredPromoSets: unfilteredPromoSets.length,
+      },
+      filteredSets,
+      promoSets,
+      unfilteredPromoSets,
+    });
+  } catch (error) {
+    console.error("Error listing filtered sets:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to list filtered sets",
+      error: error.message,
+    });
+  }
+});
+
 module.exports = router;
