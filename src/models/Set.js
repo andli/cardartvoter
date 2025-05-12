@@ -21,6 +21,14 @@ const setSchema = new mongoose.Schema(
     },
     release_date: Date,
     card_count: Number,
+    block: {
+      type: String,
+      index: true,
+    },
+    block_code: {
+      type: String,
+      index: true,
+    },
     shouldFilter: {
       type: Boolean,
       default: false,

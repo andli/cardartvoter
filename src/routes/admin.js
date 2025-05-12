@@ -115,6 +115,8 @@ router.post("/update-sets", adminAuth, async (req, res) => {
         nonfoil_only,
         foil_only,
         icon_svg_uri,
+        block,
+        block_code,
       } = setData;
 
       // Calculate if this set should be filtered
@@ -141,6 +143,8 @@ router.post("/update-sets", adminAuth, async (req, res) => {
               set_type,
               release_date: released_at,
               card_count,
+              block,
+              block_code,
               shouldFilter,
               digital: digital || false,
               nonfoil_only: nonfoil_only || false,
@@ -518,5 +522,137 @@ router.get("/filtered-sets", adminAuth, async (req, res) => {
     });
   }
 });
+
+// Add this route to list all excluded sets with detailed information
+router.get("/excluded-sets", adminAuth, async (req, res) => {
+  try {
+    // Get all sets with relevant filtering information
+    const allSets = await Set.find({})
+      .select('code name set_type block block_code release_date card_count shouldFilter digital')
+      .sort({ shouldFilter: -1, set_type: 1, release_date: -1 })
+      .lean();
+    
+    // Get counts of cards per set (including disabled ones)
+    const cardCounts = await Card.aggregate([
+      { $group: { 
+        _id: "$set", 
+        totalCards: { $sum: 1 },
+        enabledCards: { 
+          $sum: { $cond: [{ $eq: ["$enabled", true] }, 1, 0] } 
+        }
+      }}
+    ]);
+    
+    // Create a map for easy lookup
+    const cardCountMap = {};
+    cardCounts.forEach(item => {
+      cardCountMap[item._id] = {
+        totalCards: item.totalCards,
+        enabledCards: item.enabledCards
+      };
+    });
+    
+    // Enhance set data with card counts
+    const enhancedSets = allSets.map(set => {
+      const cardData = cardCountMap[set.code] || { totalCards: 0, enabledCards: 0 };
+      return {
+        ...set,
+        cardCounts: cardData,
+        exclusionReason: getExclusionReason(set)
+      };
+    });
+    
+    // Separate into different categories
+    const excludedSets = enhancedSets.filter(set => set.shouldFilter);
+    const includedSets = enhancedSets.filter(set => !set.shouldFilter);
+    
+    // Further categorize excluded sets by reason
+    const excludedByType = excludedSets.filter(set => 
+      ["token", "memorabilia", "promo", "alchemy", "minigame"].includes(set.set_type));
+    const excludedDigital = excludedSets.filter(set => set.digital && !excludedByType.includes(set));
+    const excludedOther = excludedSets.filter(set => 
+      !excludedByType.includes(set) && !excludedDigital.includes(set));
+    
+    // Stats
+    const stats = {
+      totalSets: allSets.length,
+      includedSets: includedSets.length,
+      excludedSets: excludedSets.length,
+      excludedByType: {
+        total: excludedByType.length,
+        token: excludedByType.filter(s => s.set_type === "token").length,
+        promo: excludedByType.filter(s => s.set_type === "promo").length,
+        memorabilia: excludedByType.filter(s => s.set_type === "memorabilia").length,
+        alchemy: excludedByType.filter(s => s.set_type === "alchemy").length,
+        minigame: excludedByType.filter(s => s.set_type === "minigame").length
+      },
+      excludedDigital: excludedDigital.length,
+      excludedOther: excludedOther.length,
+      blocks: getBlockStats(allSets)
+    };
+
+    res.json({
+      success: true,
+      stats,
+      excludedSets,
+      excludedByType,
+      excludedDigital,
+      excludedOther,
+      includedSets
+    });
+  } catch (error) {
+    console.error("Error listing excluded sets:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to list excluded sets",
+      error: error.message,
+    });
+  }
+});
+
+// Helper function to determine exclusion reason
+function getExclusionReason(set) {
+  if (!set.shouldFilter) return "Not excluded";
+  
+  const filteredSetTypes = ["token", "memorabilia", "promo", "alchemy", "minigame"];
+  
+  if (filteredSetTypes.includes(set.set_type)) {
+    return `Set type: ${set.set_type}`;
+  }
+  
+  if (set.digital) {
+    return "Digital-only set";
+  }
+  
+  return "Manually excluded";
+}
+
+// Helper function to get block statistics
+function getBlockStats(sets) {
+  const blockMap = {};
+  
+  sets.forEach(set => {
+    if (set.block) {
+      if (!blockMap[set.block]) {
+        blockMap[set.block] = {
+          name: set.block,
+          code: set.block_code,
+          total: 0,
+          included: 0,
+          excluded: 0
+        };
+      }
+      
+      blockMap[set.block].total++;
+      if (set.shouldFilter) {
+        blockMap[set.block].excluded++;
+      } else {
+        blockMap[set.block].included++;
+      }
+    }
+  });
+  
+  return Object.values(blockMap);
+}
 
 module.exports = router;
