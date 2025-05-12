@@ -433,14 +433,66 @@ router.post("/filter-set", adminAuth, async (req, res) => {
 router.post("/unfilter-set", adminAuth, async (req, res) => {
   try {
     const setCode = req.body.set || req.query.set;
+    const blockCode = req.body.block_code || req.query.block_code;
 
-    if (!setCode) {
+    // Check for at least one required parameter
+    if (!setCode && !blockCode) {
       return res.status(400).json({
         success: false,
-        message: "Set code is required (e.g. ?set=sld for Secret Lair Drop)",
+        message:
+          "Either set code or block_code is required (e.g. ?set=sld or ?block_code=znr)",
       });
     }
 
+    // Handle unfiltering by block_code
+    if (blockCode) {
+      console.log(
+        `Admin request to unfilter all sets with block_code: ${blockCode}`
+      );
+
+      // Find all sets with the matching block_code
+      const setsToUnfilter = await Set.find({
+        block_code: blockCode.toLowerCase(),
+        shouldFilter: true,
+      }).lean();
+
+      if (setsToUnfilter.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: `No filtered sets found with block_code ${blockCode}`,
+        });
+      }
+
+      const setCodesInBlock = setsToUnfilter.map((s) => s.code);
+      console.log(
+        `Found ${setCodesInBlock.length} sets to unfilter in block ${blockCode}`
+      );
+
+      // Update all the sets to be unfiltered
+      const result = await Set.updateMany(
+        { block_code: blockCode.toLowerCase() },
+        { $set: { shouldFilter: false } }
+      );
+
+      // Enable all cards from these sets
+      const cardResult = await Card.updateMany(
+        { set: { $in: setCodesInBlock } },
+        { $set: { enabled: true } }
+      );
+
+      return res.json({
+        success: true,
+        message: `Unfiltered ${result.modifiedCount} sets with block_code ${blockCode}`,
+        setsUnfiltered: result.modifiedCount,
+        cardsEnabled: cardResult.modifiedCount,
+        affectedSets: setsToUnfilter.map((s) => ({
+          code: s.code,
+          name: s.name,
+        })),
+      });
+    }
+
+    // Handle unfiltering by set code (existing functionality)
     console.log(`Admin request to unfilter set with code: ${setCode}`);
 
     // Find the set first to get information
@@ -528,51 +580,64 @@ router.get("/excluded-sets", adminAuth, async (req, res) => {
   try {
     // Get all sets with relevant filtering information
     const allSets = await Set.find({})
-      .select('code name set_type block block_code release_date card_count shouldFilter digital')
+      .select(
+        "code name set_type block block_code release_date card_count shouldFilter digital"
+      )
       .sort({ shouldFilter: -1, set_type: 1, release_date: -1 })
       .lean();
-    
+
     // Get counts of cards per set (including disabled ones)
     const cardCounts = await Card.aggregate([
-      { $group: { 
-        _id: "$set", 
-        totalCards: { $sum: 1 },
-        enabledCards: { 
-          $sum: { $cond: [{ $eq: ["$enabled", true] }, 1, 0] } 
-        }
-      }}
+      {
+        $group: {
+          _id: "$set",
+          totalCards: { $sum: 1 },
+          enabledCards: {
+            $sum: { $cond: [{ $eq: ["$enabled", true] }, 1, 0] },
+          },
+        },
+      },
     ]);
-    
+
     // Create a map for easy lookup
     const cardCountMap = {};
-    cardCounts.forEach(item => {
+    cardCounts.forEach((item) => {
       cardCountMap[item._id] = {
         totalCards: item.totalCards,
-        enabledCards: item.enabledCards
+        enabledCards: item.enabledCards,
       };
     });
-    
+
     // Enhance set data with card counts
-    const enhancedSets = allSets.map(set => {
-      const cardData = cardCountMap[set.code] || { totalCards: 0, enabledCards: 0 };
+    const enhancedSets = allSets.map((set) => {
+      const cardData = cardCountMap[set.code] || {
+        totalCards: 0,
+        enabledCards: 0,
+      };
       return {
         ...set,
         cardCounts: cardData,
-        exclusionReason: getExclusionReason(set)
+        exclusionReason: getExclusionReason(set),
       };
     });
-    
+
     // Separate into different categories
-    const excludedSets = enhancedSets.filter(set => set.shouldFilter);
-    const includedSets = enhancedSets.filter(set => !set.shouldFilter);
-    
+    const excludedSets = enhancedSets.filter((set) => set.shouldFilter);
+    const includedSets = enhancedSets.filter((set) => !set.shouldFilter);
+
     // Further categorize excluded sets by reason
-    const excludedByType = excludedSets.filter(set => 
-      ["token", "memorabilia", "promo", "alchemy", "minigame"].includes(set.set_type));
-    const excludedDigital = excludedSets.filter(set => set.digital && !excludedByType.includes(set));
-    const excludedOther = excludedSets.filter(set => 
-      !excludedByType.includes(set) && !excludedDigital.includes(set));
-    
+    const excludedByType = excludedSets.filter((set) =>
+      ["token", "memorabilia", "promo", "alchemy", "minigame"].includes(
+        set.set_type
+      )
+    );
+    const excludedDigital = excludedSets.filter(
+      (set) => set.digital && !excludedByType.includes(set)
+    );
+    const excludedOther = excludedSets.filter(
+      (set) => !excludedByType.includes(set) && !excludedDigital.includes(set)
+    );
+
     // Stats
     const stats = {
       totalSets: allSets.length,
@@ -580,15 +645,17 @@ router.get("/excluded-sets", adminAuth, async (req, res) => {
       excludedSets: excludedSets.length,
       excludedByType: {
         total: excludedByType.length,
-        token: excludedByType.filter(s => s.set_type === "token").length,
-        promo: excludedByType.filter(s => s.set_type === "promo").length,
-        memorabilia: excludedByType.filter(s => s.set_type === "memorabilia").length,
-        alchemy: excludedByType.filter(s => s.set_type === "alchemy").length,
-        minigame: excludedByType.filter(s => s.set_type === "minigame").length
+        token: excludedByType.filter((s) => s.set_type === "token").length,
+        promo: excludedByType.filter((s) => s.set_type === "promo").length,
+        memorabilia: excludedByType.filter((s) => s.set_type === "memorabilia")
+          .length,
+        alchemy: excludedByType.filter((s) => s.set_type === "alchemy").length,
+        minigame: excludedByType.filter((s) => s.set_type === "minigame")
+          .length,
       },
       excludedDigital: excludedDigital.length,
       excludedOther: excludedOther.length,
-      blocks: getBlockStats(allSets)
+      blocks: getBlockStats(allSets),
     };
 
     res.json({
@@ -598,7 +665,7 @@ router.get("/excluded-sets", adminAuth, async (req, res) => {
       excludedByType,
       excludedDigital,
       excludedOther,
-      includedSets
+      includedSets,
     });
   } catch (error) {
     console.error("Error listing excluded sets:", error);
@@ -613,25 +680,31 @@ router.get("/excluded-sets", adminAuth, async (req, res) => {
 // Helper function to determine exclusion reason
 function getExclusionReason(set) {
   if (!set.shouldFilter) return "Not excluded";
-  
-  const filteredSetTypes = ["token", "memorabilia", "promo", "alchemy", "minigame"];
-  
+
+  const filteredSetTypes = [
+    "token",
+    "memorabilia",
+    "promo",
+    "alchemy",
+    "minigame",
+  ];
+
   if (filteredSetTypes.includes(set.set_type)) {
     return `Set type: ${set.set_type}`;
   }
-  
+
   if (set.digital) {
     return "Digital-only set";
   }
-  
+
   return "Manually excluded";
 }
 
 // Helper function to get block statistics
 function getBlockStats(sets) {
   const blockMap = {};
-  
-  sets.forEach(set => {
+
+  sets.forEach((set) => {
     if (set.block) {
       if (!blockMap[set.block]) {
         blockMap[set.block] = {
@@ -639,10 +712,10 @@ function getBlockStats(sets) {
           code: set.block_code,
           total: 0,
           included: 0,
-          excluded: 0
+          excluded: 0,
         };
       }
-      
+
       blockMap[set.block].total++;
       if (set.shouldFilter) {
         blockMap[set.block].excluded++;
@@ -651,7 +724,7 @@ function getBlockStats(sets) {
       }
     }
   });
-  
+
   return Object.values(blockMap);
 }
 
