@@ -19,6 +19,7 @@ exports.getHomePage = async (req, res) => {
     const cards = await cardService.getCardPair(targetCardId);
     const topRankings = await rankingService.getTopRankings(10, 1);
     const voteCount = await statsService.getVoteCount();
+    const cardCount = await statsService.getEnabledCardCount(); // Get count of enabled cards
 
     // Check if we have exactly 2 cards and both have scryfallId
     const hasValidCards =
@@ -59,6 +60,8 @@ exports.getHomePage = async (req, res) => {
       getArtCropUrl: imageHelpers.getArtCropUrl,
       getSmallCardUrl: imageHelpers.getSmallCardUrl,
       getCardUrl: imageHelpers.getCardUrl,
+      voteCount, // Pass vote count to template
+      cardCount, // Pass enabled card count to template
     });
   } catch (error) {
     console.error("Error loading homepage:", error);
@@ -71,10 +74,16 @@ exports.getHomePage = async (req, res) => {
 };
 
 // FAQ page handler
-exports.getFaqPage = (req, res) => {
+exports.getFaqPage = async (req, res) => {
   try {
+    // Get statistics for consistent footer display
+    const voteCount = await statsService.getVoteCount();
+    const cardCount = await statsService.getEnabledCardCount();
+
     res.render("faq", {
       title: "FAQ",
+      voteCount,
+      cardCount,
     });
   } catch (error) {
     console.error("Error loading FAQ page:", error);
@@ -87,10 +96,16 @@ exports.getFaqPage = (req, res) => {
 };
 
 // Search page handler
-exports.getSearchPage = (req, res) => {
+exports.getSearchPage = async (req, res) => {
   try {
+    // Get statistics for consistent footer display
+    const voteCount = await statsService.getVoteCount();
+    const cardCount = await statsService.getEnabledCardCount();
+
     res.render("search", {
       title: "Search",
+      voteCount,
+      cardCount,
     });
   } catch (error) {
     console.error("Error loading Search page:", error);

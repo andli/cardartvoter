@@ -1,4 +1,5 @@
 const rankingService = require("../services/rankingService");
+const statsService = require("../services/statsService");
 const imageHelpers = require("../utils/imageHelpers");
 const Card = require("../models/Card");
 
@@ -20,14 +21,20 @@ exports.displayRankings = async (req, res) => {
     const topSets = await rankingService.getTopSets(10);
     const bottomSets = await rankingService.getBottomSets(10);
 
+    // Get statistics for consistent footer display
+    const voteCount = await statsService.getVoteCount();
+    const cardCount = await statsService.getEnabledCardCount();
+
     res.render("rankings", {
       title: "Card Art Rankings",
       topCards,
       bottomCards,
       topArtists,
       bottomArtists,
-      topSets, // Add this
-      bottomSets, // Add this
+      topSets,
+      bottomSets,
+      voteCount,
+      cardCount,
       getArtCropUrl: imageHelpers.getArtCropUrl,
       getCardUrl: imageHelpers.getCardUrl,
       getSetIconPath: (code) => `/images/set-icons/${code.toLowerCase()}.svg`, // For backward compatibility

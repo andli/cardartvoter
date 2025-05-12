@@ -16,6 +16,8 @@ Note that these sets have been excluded:
 - cmb1 (Mystery Booster Playtest Cards 2019)
 - dbl (Innistrad: Double Feature)
 
+Explicitly included blocks: jgp, mpr, fnm
+
 Candidates for being excluded:
 
 - art:"universes beyond" -art:"forgotten realms" -art:"romance-of-the-three-kingdoms"
