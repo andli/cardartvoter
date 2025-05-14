@@ -19,7 +19,7 @@ exports.getHomePage = async (req, res) => {
     const cards = await cardService.getCardPair(targetCardId);
     const topRankings = await rankingService.getTopRankings(10, 1);
     const voteCount = await statsService.getVoteCount();
-    const cardCount = await statsService.getEnabledCardCount(); // Get count of enabled cards
+    const cardCount = await statsService.getEnabledCardCount();
 
     // Check if we have exactly 2 cards and both have scryfallId
     const hasValidCards =
@@ -36,12 +36,22 @@ exports.getHomePage = async (req, res) => {
       // Generate a random nonce for this pair
       pairId = crypto.randomBytes(16).toString("hex");
 
+      // Store the information in the session
       req.session.currentPair = {
         card1: cards[0].scryfallId,
         card2: cards[1].scryfallId,
         timestamp: Date.now(),
         pairId: pairId,
+        isTargeted: !!targetCardId, // Add flag to track if this was a targeted request
       };
+
+      // Ensure session is saved immediately to prevent race conditions
+      await new Promise((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
     } else {
       console.warn(
         "Did not get two valid cards for voting. Cards received:",
@@ -56,12 +66,12 @@ exports.getHomePage = async (req, res) => {
       topRankings,
       hasCards: hasValidCards,
       pairId: pairId,
-      voteHistory: req.session.voteHistory || [], // Pass vote history to template
+      voteHistory: req.session.voteHistory || [],
       getArtCropUrl: imageHelpers.getArtCropUrl,
       getSmallCardUrl: imageHelpers.getSmallCardUrl,
       getCardUrl: imageHelpers.getCardUrl,
-      voteCount, // Pass vote count to template
-      cardCount, // Pass enabled card count to template
+      voteCount,
+      cardCount,
     });
   } catch (error) {
     console.error("Error loading homepage:", error);
