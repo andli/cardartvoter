@@ -217,19 +217,3 @@ exports.submitVote = async (req, res) => {
     });
   }
 };
-
-// Add a new endpoint to get vote history
-exports.getVoteHistory = async (req, res) => {
-  try {
-    return res.json({
-      success: true,
-      voteHistory: req.session.voteHistory || [],
-    });
-  } catch (error) {
-    console.error("Error getting vote history:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Error retrieving vote history",
-    });
-  }
-};

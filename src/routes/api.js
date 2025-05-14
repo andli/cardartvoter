@@ -6,9 +6,6 @@ const voteController = require("../controllers/voteController");
 // Replace the existing POST /vote route with our controller
 router.post("/vote", voteController.submitVote);
 
-// Add new endpoint for fetching vote history
-router.get("/vote-history", voteController.getVoteHistory);
-
 // Get a smart pair of cards for comparison
 router.get("/cards/pair", async (req, res) => {
   try {

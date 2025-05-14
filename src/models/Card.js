@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const config = require("../config/app");
 
 const cardSchema = new mongoose.Schema(
   {
@@ -31,7 +32,7 @@ const cardSchema = new mongoose.Schema(
     // Voting system data
     rating: {
       type: Number,
-      default: 2500, // Updated starting rating for expanded range
+      default: config.elo.ratings.initial,
       index: true,
     },
     comparisons: {
