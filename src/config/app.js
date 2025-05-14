@@ -13,9 +13,11 @@ module.exports = {
 
   // ELO rating settings
   elo: {
-    initialRating: 1500,
-    minRating: 1000,
-    maxRating: 2000,
+    ratings: {
+      min: 0,
+      max: 5000,
+      initial: 2500,
+    },
     kFactors: {
       new: 48, // For cards with < 10 comparisons
       establishing: 32, // For cards with < 30 comparisons

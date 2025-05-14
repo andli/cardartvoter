@@ -1,11 +1,12 @@
 const Card = require("../models/Card");
 const Vote = require("../models/Vote");
 const Stats = require("../models/Stats");
+const config = require("../config/app");
 
-// System constants for enhanced granularity
-const RATING_MIN = 0; // Expanded minimum rating
-const RATING_MAX = 5000; // Expanded maximum rating
-const RATING_INIT = 2500; // Initial rating centered in new range
+// Get system constants from config file instead of hardcoding
+const RATING_MIN = config.elo.ratings.min;
+const RATING_MAX = config.elo.ratings.max;
+const RATING_INIT = config.elo.ratings.initial;
 
 exports.processVote = async (selectedCardId, sessionPair) => {
   try {

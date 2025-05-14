@@ -44,16 +44,16 @@ const updateRatings = (cardA, cardB, winnerId) => {
     cardA: {
       ...cardA,
       rating: Math.max(
-        appConfig.elo.minRating,
-        Math.min(appConfig.elo.maxRating, updatedRatings.newRatingA)
+        appConfig.elo.ratings.min,
+        Math.min(appConfig.elo.ratings.max, updatedRatings.newRatingA)
       ),
       comparisons: cardA.comparisons + 1,
     },
     cardB: {
       ...cardB,
       rating: Math.max(
-        appConfig.elo.minRating,
-        Math.min(appConfig.elo.maxRating, updatedRatings.newRatingB)
+        appConfig.elo.ratings.min,
+        Math.min(appConfig.elo.ratings.max, updatedRatings.newRatingB)
       ),
       comparisons: cardB.comparisons + 1,
     },
