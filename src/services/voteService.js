@@ -30,17 +30,18 @@ exports.processVote = async (selectedCardId, sessionPair) => {
     }
 
     // Use eloService to calculate new ratings
-    const { newWinnerRating, newLoserRating, ratingChange } = eloService.processVote(
-      {
-        rating: winningCard.rating,
-        comparisons: winningCard.comparisons
-      }, 
-      {
-        rating: losingCard.rating,
-        comparisons: losingCard.comparisons
-      }
-    );
-    
+    const { newWinnerRating, newLoserRating, ratingChange } =
+      eloService.processVote(
+        {
+          rating: winningCard.rating,
+          comparisons: winningCard.comparisons,
+        },
+        {
+          rating: losingCard.rating,
+          comparisons: losingCard.comparisons,
+        }
+      );
+
     // Update ratings with values from eloService
     winningCard.rating = newWinnerRating;
     losingCard.rating = newLoserRating;
