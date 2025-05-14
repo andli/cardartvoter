@@ -67,9 +67,29 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       // Submit the vote via AJAX
-      const data = await submitVote(selectedCardId, otherCardId, pairId);
+      const response = await fetch("/api/vote", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          selectedCardId: selectedCardId,
+          otherCardId: otherCardId, // Include the other card ID
+          pairId: pairId,
+        }),
+        credentials: "same-origin", // Ensure cookies are sent with the request
+      });
 
-      if (data && data.success) {
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || `Network response was not ok: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
         // Check if we had a session reset
         if (data.info && data.info.includes("Session was reset")) {
           console.log(
@@ -101,9 +121,18 @@ document.addEventListener("DOMContentLoaded", function () {
         if (data.voteHistory) {
           updateVoteHistory(data.voteHistory);
         }
+      } else {
+        throw new Error(data.error || "Unknown error");
       }
     } catch (error) {
       console.error("Error during voting:", error);
+
+      // Show a more specific error message based on what went wrong
+      if (error.message.includes("Session")) {
+        alert("Session issue detected. Please refresh the page and try again.");
+      } else {
+        alert("Error submitting vote. Please try again.");
+      }
     } finally {
       setTimeout(() => votingContainer.classList.remove("voting-loading"), 800);
       setTimeout(() => votingContainer.classList.remove("animating"), 1200);
@@ -298,73 +327,6 @@ document.addEventListener("DOMContentLoaded", function () {
     } catch (err) {
       console.error("Error generating card URL for", scryfallId, err);
       return "/api/card-back";
-    }
-  }
-
-  // Enhance error handling
-  async function submitVote(selectedId, otherCardId, pairId) {
-    try {
-      //console.log("Submitting vote with pair ID:", pairId);
-
-      const response = await fetch("/api/vote", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          selectedCardId: selectedId,
-          otherCardId: otherCardId,
-          pairId: pairId,
-        }),
-        credentials: "same-origin",
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error("Vote submission error:", data);
-
-        // If it's a pair ID error, provide a friendlier message with a refresh button
-        if (data.message && data.message.includes("pair ID")) {
-          showErrorWithRefresh(
-            "Your voting session needs to be refreshed. Click below to continue."
-          );
-          return null;
-        }
-
-        throw new Error(data.message || "Error during voting");
-      }
-
-      return data;
-    } catch (error) {
-      console.error("Error during voting:", error);
-      showErrorMessage(`Error during voting: ${error.message}`);
-      return null;
-    }
-  }
-
-  // Add this helper function for better UX
-  function showErrorWithRefresh(message) {
-    const container = document.querySelector(".voting-container");
-    if (!container) return;
-
-    // Save the original content
-    const originalContent = container.innerHTML;
-
-    // Replace with error message and refresh button
-    container.innerHTML = `
-      <div class="alert alert-warning text-center" role="alert">
-        <p>${message}</p>
-        <button class="btn btn-primary refresh-page-btn">Refresh Now</button>
-      </div>
-    `;
-
-    // Add click handler for the refresh button
-    const refreshBtn = container.querySelector(".refresh-page-btn");
-    if (refreshBtn) {
-      refreshBtn.addEventListener("click", () => {
-        window.location.reload();
-      });
     }
   }
 });

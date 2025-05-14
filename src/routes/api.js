@@ -1,123 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const Card = require("../models/Card");
-const voteService = require("../services/voteService");
+const voteController = require("../controllers/voteController");
 
 // Replace the existing POST /vote route with our controller
-router.post("/vote", async (req, res) => {
-  try {
-    const { selectedCardId, otherCardId, pairId } = req.body;
+router.post("/vote", voteController.submitVote);
 
-    // Add detailed logging to understand the issue
-    console.log("Vote request received:", {
-      selectedCardId,
-      otherCardId,
-      pairId,
-      sessionPair: req.session.currentPair
-        ? {
-            card1: req.session.currentPair.card1,
-            card2: req.session.currentPair.card2,
-            pairId: req.session.currentPair.pairId,
-            isTargeted: req.session.currentPair.isTargeted,
-          }
-        : null,
-    });
-
-    // Basic validation
-    if (!selectedCardId || !otherCardId) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing selected or other card ID",
-      });
-    }
-
-    // Session validation with better handling for edge cases
-    if (!req.session.currentPair) {
-      console.log("No current pair in session - creating an implicit pair");
-
-      // For robustness, create a temporary pair object if missing
-      // This helps with page refreshes and other edge cases
-      req.session.currentPair = {
-        card1: selectedCardId,
-        card2: otherCardId,
-        timestamp: Date.now(),
-        pairId: pairId,
-        isImplicitlyCreated: true,
-      };
-    }
-
-    // Special handling for targeted requests which might cause session issues
-    const isTargetedRequest = req.session.currentPair.isTargeted;
-
-    // Flexible validation to handle edge cases better
-    let isValidVote = false;
-
-    // Normal validation
-    if (pairId === req.session.currentPair.pairId) {
-      isValidVote = true;
-    }
-    // Special case: The cards match what's in the session but pairId doesn't
-    else if (
-      (req.session.currentPair.card1 === selectedCardId &&
-        req.session.currentPair.card2 === otherCardId) ||
-      (req.session.currentPair.card1 === otherCardId &&
-        req.session.currentPair.card2 === selectedCardId)
-    ) {
-      console.log("Cards match but pair ID doesn't - allowing vote anyway");
-      isValidVote = true;
-    }
-    // Special case: Targeted requests might have session issues
-    else if (isTargetedRequest) {
-      console.log("Targeted request with mismatched pair ID - allowing vote");
-      isValidVote = true;
-    }
-
-    if (!isValidVote) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid pair ID. Please refresh the page.",
-      });
-    }
-
-    // Process the vote with service
-    await voteService.processVote(selectedCardId, otherCardId);
-
-    // Update vote history in session
-    if (!req.session.voteHistory) {
-      req.session.voteHistory = [];
-    }
-    req.session.voteHistory.unshift({
-      selectedCardId,
-      otherCardId,
-      timestamp: Date.now(),
-    });
-    if (req.session.voteHistory.length > 20) {
-      req.session.voteHistory = req.session.voteHistory.slice(0, 20);
-    }
-
-    // Clear the current pair to force a new pair next time
-    req.session.currentPair = null;
-
-    // Save the session explicitly to avoid race conditions
-    await new Promise((resolve, reject) => {
-      req.session.save((err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-
-    res.json({
-      success: true,
-      message: "Vote recorded successfully",
-    });
-  } catch (error) {
-    console.error("Error processing vote:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error while processing vote",
-    });
-  }
-});
+// Add new endpoint for fetching vote history
+router.get("/vote-history", voteController.getVoteHistory);
 
 // Get a smart pair of cards for comparison
 router.get("/cards/pair", async (req, res) => {
