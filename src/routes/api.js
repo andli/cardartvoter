@@ -80,7 +80,7 @@ router.post("/vote", async (req, res) => {
     }
 
     // Process the vote with service
-    await voteService.recordVote(selectedCardId, otherCardId);
+    await voteService.processVote(selectedCardId, otherCardId);
 
     // Update vote history in session
     if (!req.session.voteHistory) {
