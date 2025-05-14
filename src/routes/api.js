@@ -119,9 +119,6 @@ router.post("/vote", async (req, res) => {
   }
 });
 
-// Add new endpoint for fetching vote history
-router.get("/vote-history", voteController.getVoteHistory);
-
 // Get a smart pair of cards for comparison
 router.get("/cards/pair", async (req, res) => {
   try {
