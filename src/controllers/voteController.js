@@ -58,6 +58,8 @@ exports.submitVote = async (req, res) => {
         card2: newCards[1].scryfallId,
         timestamp: Date.now(),
         pairId: newPairId,
+        // Check if the original request was for a targeted card
+        isTargeted: req.query && req.query.target_card_id ? true : false
       };
 
       // Force session save to ensure it persists
@@ -98,11 +100,18 @@ exports.submitVote = async (req, res) => {
       console.error("Pair ID mismatch:", {
         session: req.session.currentPair.pairId,
         request: pairId,
+        isTargeted: req.session.currentPair.isTargeted
       });
-      return res.status(400).json({
-        success: false,
-        error: "Invalid pair ID. Please refresh the page.",
-      });
+      
+      // Special handling for targeted votes - they should be allowed even with mismatched pairId
+      if (req.session.currentPair.isTargeted) {
+        console.log("Allowing vote for targeted card despite pair ID mismatch");
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid pair ID. Please refresh the page.",
+        });
+      }
     }
 
     // Process the vote
@@ -193,6 +202,8 @@ exports.submitVote = async (req, res) => {
       card2: newCards[1].scryfallId,
       timestamp: Date.now(),
       pairId: newPairId,
+      // Preserve the isTargeted flag if it exists
+      isTargeted: req.session.currentPair && req.session.currentPair.isTargeted
     };
 
     // Return JSON with both the vote result, new cards, and vote history
