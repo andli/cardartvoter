@@ -15,12 +15,10 @@ Note that these sets have been excluded:
 - sunf (Unfinity Sticker Sheets)
 - cmb1 (Mystery Booster Playtest Cards 2019)
 - dbl (Innistrad: Double Feature)
-
-Explicitly included blocks: jgp, mpr, fnm
-
-Candidates for being excluded:
-
 - art:"universes beyond" -art:"forgotten realms" -art:"romance-of-the-three-kingdoms"
+  [40K, ACR, AFR, BOT, CLB, FCA, FIC, FIN, H17, LTC, LTR, PIP, REX, SPE, WHO] as of 2025-05-22
+
+Explicitly included blocks: [jgp, mpr, fnm]
 
 ## TODO
 
