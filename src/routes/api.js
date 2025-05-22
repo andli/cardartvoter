@@ -268,19 +268,14 @@ router.get("/search/artist", async (req, res) => {
       return res.status(400).json({ message: "Search query too short" });
     }
 
-    // Get all artists with their stats for comparison
-    const allArtists = await Card.aggregate([
-      { $match: { enabled: true, comparisons: { $gt: 0 } } },
-      {
-        $group: {
-          _id: "$artist",
-          name: { $first: "$artist" },
-          avgRating: { $avg: "$rating" },
-          cardCount: { $sum: 1 },
-        },
-      },
-      { $sort: { avgRating: -1 } },
-    ]);
+    // Use the centralized function from rankingService
+    const rankingService = require("../services/rankingService");
+
+    // Get all artists with their stats and Bayesian ratings
+    const allArtists = await rankingService.calculateArtistBayesianRatings({
+      // No limit, we want all artists to calculate rank
+      sort: "desc", // Sort by rating descending
+    });
 
     // Get stats for the specific artist
     const exactMatch = allArtists.find(
@@ -296,7 +291,7 @@ router.get("/search/artist", async (req, res) => {
       return res.status(404).json({ message: "Artist not found" });
     }
 
-    // Calculate the artist's rank
+    // Calculate the artist's rank (now using bayesianRating)
     const artistRank = allArtists.findIndex((a) => a._id === artist._id) + 1;
     const totalArtists = allArtists.length;
 
@@ -312,7 +307,11 @@ router.get("/search/artist", async (req, res) => {
 
     res.json({
       artist: artist.name,
-      averageRating: artist.avgRating.toFixed(0),
+      // Use the Bayesian rating for consistency with the rest of the app
+      averageRating: artist.bayesianRating.toFixed(0),
+      // Include both for transparency
+      rawAverageRating: artist.avgRating.toFixed(0),
+      bayesianRating: artist.bayesianRating.toFixed(0),
       cardCount: artist.cardCount,
       rank: artistRank,
       totalArtists,

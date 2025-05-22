@@ -578,7 +578,7 @@
     }
     
     function displayArtistDetails(data) {
-      const { artist, averageRating, cardCount, rank, totalArtists, sampleCards } = data;
+      const { artist, averageRating, rawAverageRating, bayesianRating, cardCount, rank, totalArtists, sampleCards } = data;
       
       // Calculate percentile
       const percent = 100 - (rank / totalArtists) * 100;
@@ -634,11 +634,19 @@
             </div>
             
             <div class="row mb-3">
-              <div class="col">
+              <div class="col-md-6">
                 <div class="card bg-light">
                   <div class="card-body text-center">
-                    <h1>${averageRating}</h1>
-                    <div class="text-muted">Average Rating</div>
+                    <h1>${bayesianRating}</h1>
+                    <div class="text-muted">Bayesian Rating</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h1>${rawAverageRating}</h1>
+                    <div class="text-muted">Raw Average</div>
                   </div>
                 </div>
               </div>

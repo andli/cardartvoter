@@ -56,24 +56,6 @@ exports.getBottomRankedCards = async (limit = 20, minComparisons = 1) => {
 
 // Standardize the function names throughout the codebase
 exports.getTopArtists = async (limit = 10) => {
-  // First get the global average rating and total card count
-  const stats = await Card.aggregate([
-    { $match: { enabled: true } },
-    {
-      $group: {
-        _id: null,
-        avgRating: { $avg: "$rating" },
-        totalCards: { $sum: 1 },
-      },
-    },
-  ]).then((result) => ({
-    globalAvg: result[0]?.avgRating || 1500,
-    totalCards: result[0]?.totalCards || 0,
-  }));
-
-  // Use fixed C value for artists from config
-  const C = appConfig.bayesian.artistCValue;
-
   // First, get highest rated card for each artist
   const highestRatedCardsByArtist = await Card.aggregate([
     { $match: { enabled: true, rating: { $gt: 1500 } } },
@@ -96,44 +78,11 @@ exports.getTopArtists = async (limit = 10) => {
     };
   });
 
-  // Get all artists with their ratings
-  const artists = await Card.aggregate([
-    { $match: { enabled: true, comparisons: { $gt: 0 } } },
-    {
-      $group: {
-        _id: "$artist",
-        name: { $first: "$artist" },
-        avgRating: { $avg: "$rating" },
-        cardCount: { $sum: 1 },
-      },
-    },
-    // Use minimum card threshold from config
-    { $match: { cardCount: { $gte: appConfig.bayesian.minCardCount } } },
-    {
-      $addFields: {
-        // Calculate Bayesian average with fixed C value
-        bayesianRating: {
-          $divide: [
-            {
-              $add: [
-                { $multiply: [C, stats.globalAvg] },
-                { $multiply: ["$avgRating", "$cardCount"] },
-              ],
-            },
-            { $add: [C, "$cardCount"] },
-          ],
-        },
-        confidenceScore: {
-          $min: [
-            1,
-            { $divide: ["$cardCount", appConfig.bayesian.confidenceDivisor] },
-          ],
-        },
-      },
-    },
-    { $sort: { bayesianRating: -1 } },
-    { $limit: limit },
-  ]);
+  // Use the centralized method to get artists with bayesian ratings
+  const artists = await exports.calculateArtistBayesianRatings({
+    limit,
+    sort: "desc",
+  });
 
   // Add the notable card information back to each artist
   return artists.map((artist) => {
@@ -149,24 +98,6 @@ exports.getTopArtists = async (limit = 10) => {
 };
 
 exports.getBottomArtists = async (limit = 10) => {
-  // First get the global average rating and total card count
-  const stats = await Card.aggregate([
-    { $match: { enabled: true } },
-    {
-      $group: {
-        _id: null,
-        avgRating: { $avg: "$rating" },
-        totalCards: { $sum: 1 },
-      },
-    },
-  ]).then((result) => ({
-    globalAvg: result[0]?.avgRating || 1500,
-    totalCards: result[0]?.totalCards || 0,
-  }));
-
-  // Use fixed C value for artists from config
-  const C = appConfig.bayesian.artistCValue;
-
   // First, get LOWEST rated card for each artist (changed from highest)
   const lowestRatedCardsByArtist = await Card.aggregate([
     { $match: { enabled: true, comparisons: { $gte: 5 } } }, // Ensure some votes for fairness
@@ -191,44 +122,11 @@ exports.getBottomArtists = async (limit = 10) => {
     };
   });
 
-  // Get all artists with their ratings
-  const artists = await Card.aggregate([
-    { $match: { enabled: true, comparisons: { $gt: 0 } } },
-    {
-      $group: {
-        _id: "$artist",
-        name: { $first: "$artist" },
-        avgRating: { $avg: "$rating" },
-        cardCount: { $sum: 1 },
-      },
-    },
-    // Use minimum card threshold from config
-    { $match: { cardCount: { $gte: appConfig.bayesian.minCardCount } } },
-    {
-      $addFields: {
-        // Calculate Bayesian average with fixed C value
-        bayesianRating: {
-          $divide: [
-            {
-              $add: [
-                { $multiply: [C, stats.globalAvg] },
-                { $multiply: ["$avgRating", "$cardCount"] },
-              ],
-            },
-            { $add: [C, "$cardCount"] },
-          ],
-        },
-        confidenceScore: {
-          $min: [
-            1,
-            { $divide: ["$cardCount", appConfig.bayesian.confidenceDivisor] },
-          ],
-        },
-      },
-    },
-    { $sort: { bayesianRating: 1 } }, // Sort ascending for bottom artists
-    { $limit: limit },
-  ]);
+  // Use the centralized method to get artists with bayesian ratings
+  const artists = await exports.calculateArtistBayesianRatings({
+    limit,
+    sort: "asc", // Sort ascending for bottom artists
+  });
 
   // Add the notable card information back to each artist
   return artists.map((artist) => {
@@ -409,4 +307,94 @@ exports.getBottomSets = async (limit = 10) => {
   ]);
 
   return sets;
+};
+
+/**
+ * Calculate Bayesian average for artists
+ * This is a utility function used by both the ranking page and artist search
+ * @param {Object} options - Options for the calculation
+ * @param {number} options.limit - Optional limit for results
+ * @param {string} options.sort - Sort direction, 'asc' or 'desc' (default: 'desc')
+ * @param {string} options.artistName - Optional filter for a specific artist
+ * @returns {Promise<Array>} - Array of artists with bayesianRating calculated
+ */
+exports.calculateArtistBayesianRatings = async ({
+  limit = null,
+  sort = "desc",
+  artistName = null,
+} = {}) => {
+  // First get the global average rating and total card count
+  const stats = await Card.aggregate([
+    { $match: { enabled: true } },
+    {
+      $group: {
+        _id: null,
+        avgRating: { $avg: "$rating" },
+        totalCards: { $sum: 1 },
+      },
+    },
+  ]).then((result) => ({
+    globalAvg: result[0]?.avgRating || 1500,
+    totalCards: result[0]?.totalCards || 0,
+  }));
+
+  // Use fixed C value for artists from config
+  const C = appConfig.bayesian.artistCValue;
+
+  // If searching for a specific artist, adjust the pipeline
+  const matchFilter = artistName
+    ? {
+        $match: {
+          enabled: true,
+          comparisons: { $gt: 0 },
+          artist: new RegExp(artistName, "i"),
+        },
+      }
+    : { $match: { enabled: true, comparisons: { $gt: 0 } } };
+
+  // Set up the aggregation pipeline
+  const pipeline = [
+    matchFilter,
+    {
+      $group: {
+        _id: "$artist",
+        name: { $first: "$artist" },
+        avgRating: { $avg: "$rating" },
+        cardCount: { $sum: 1 },
+      },
+    },
+    // Use minimum card threshold from config
+    { $match: { cardCount: { $gte: appConfig.bayesian.minCardCount } } },
+    {
+      $addFields: {
+        // Calculate Bayesian average with fixed C value
+        bayesianRating: {
+          $divide: [
+            {
+              $add: [
+                { $multiply: [C, stats.globalAvg] },
+                { $multiply: ["$avgRating", "$cardCount"] },
+              ],
+            },
+            { $add: [C, "$cardCount"] },
+          ],
+        },
+        confidenceScore: {
+          $min: [
+            1,
+            { $divide: ["$cardCount", appConfig.bayesian.confidenceDivisor] },
+          ],
+        },
+      },
+    },
+    { $sort: { bayesianRating: sort === "asc" ? 1 : -1 } },
+  ];
+
+  // Add limit if specified
+  if (limit) {
+    pipeline.push({ $limit: limit });
+  }
+
+  // Execute the aggregation
+  return Card.aggregate(pipeline);
 };

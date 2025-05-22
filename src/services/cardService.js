@@ -19,8 +19,6 @@ exports.getCardPair = async (targetCardId = null) => {
       }).lean();
 
       if (targetCard) {
-        console.log(`Found target card by ID: ${targetCard.name}`);
-
         // Get a completely random second card using aggregate with $sample
         const randomCards = await Card.aggregate([
           {
