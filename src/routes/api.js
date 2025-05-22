@@ -234,6 +234,96 @@ router.get("/search/autocomplete", async (req, res) => {
   }
 });
 
+// Artist search autocomplete endpoint
+router.get("/search/artist/autocomplete", async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query || query.length < 2) {
+      return res.json([]);
+    }
+
+    // Create a case-insensitive regex for the search
+    const searchRegex = new RegExp(query, "i");
+
+    // Find distinct artists that match the search query
+    const results = await Card.aggregate([
+      { $match: { enabled: true, artist: searchRegex } },
+      { $group: { _id: "$artist", name: { $first: "$artist" } } },
+      { $sort: { name: 1 } },
+      { $limit: 10 },
+    ]);
+
+    res.json(results.map((artist) => ({ name: artist.name })));
+  } catch (error) {
+    console.error("Error in artist search autocomplete:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Search for a specific artist
+router.get("/search/artist", async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query || query.length < 2) {
+      return res.status(400).json({ message: "Search query too short" });
+    }
+
+    // Get all artists with their stats for comparison
+    const allArtists = await Card.aggregate([
+      { $match: { enabled: true, comparisons: { $gt: 0 } } },
+      {
+        $group: {
+          _id: "$artist",
+          name: { $first: "$artist" },
+          avgRating: { $avg: "$rating" },
+          cardCount: { $sum: 1 },
+        },
+      },
+      { $sort: { avgRating: -1 } },
+    ]);
+
+    // Get stats for the specific artist
+    const exactMatch = allArtists.find(
+      (a) => a.name.toLowerCase() === query.toLowerCase()
+    );
+    const artist =
+      exactMatch ||
+      allArtists.find((a) =>
+        a.name.toLowerCase().includes(query.toLowerCase())
+      );
+
+    if (!artist) {
+      return res.status(404).json({ message: "Artist not found" });
+    }
+
+    // Calculate the artist's rank
+    const artistRank = allArtists.findIndex((a) => a._id === artist._id) + 1;
+    const totalArtists = allArtists.length;
+
+    // Get some sample cards by this artist
+    const sampleCards = await Card.find({
+      enabled: true,
+      artist: artist.name,
+    })
+      .sort({ rating: -1 })
+      .limit(5)
+      .select("name scryfallId rating setName")
+      .lean();
+
+    res.json({
+      artist: artist.name,
+      averageRating: artist.avgRating.toFixed(0),
+      cardCount: artist.cardCount,
+      rank: artistRank,
+      totalArtists,
+      sampleCards,
+    });
+  } catch (error) {
+    console.error("Error in artist search:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // Search for a specific card by name
 router.get("/search", async (req, res) => {
   try {

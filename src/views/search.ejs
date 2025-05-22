@@ -8,34 +8,92 @@
     <div class="col-12 col-md-8 col-lg-8">
       <div class="card">
         <div class="card-body">
-          <div class="search-container mb-4">
-            <div class="form-group">
-              <label for="searchInput" class="form-label"
-                >Search for a card by name:</label
-              >
-              <div class="input-group">
-                <input
-                  type="text"
-                  class="form-control"
-                  id="searchInput"
-                  placeholder="Start typing a card name..."
-                  autocomplete="off"
-                />
-                <button class="btn btn-primary" id="searchButton">
-                  <i class="fas fa-search"></i>
-                </button>
+          <!-- Search type tabs -->
+          <ul class="nav nav-tabs mb-4" id="searchTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="card-tab" data-bs-toggle="tab" data-bs-target="#card-search" type="button" role="tab" aria-controls="card-search" aria-selected="true">
+                Card
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="artist-tab" data-bs-toggle="tab" data-bs-target="#artist-search" type="button" role="tab" aria-controls="artist-search" aria-selected="false">
+                Artist
+              </button>
+            </li>
+          </ul>
+          
+          <!-- Tab content -->
+          <div class="tab-content" id="searchTabsContent">
+            <!-- Card Search Tab -->
+            <div class="tab-pane fade show active" id="card-search" role="tabpanel" aria-labelledby="card-tab">
+              <div class="search-container mb-4">
+                <div class="form-group">
+                  <label for="searchInput" class="form-label"
+                    >Search for a card by name:</label
+                  >
+                  <div class="input-group">
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="searchInput"
+                      placeholder="Start typing a card name..."
+                      autocomplete="off"
+                    />
+                    <button class="btn btn-primary" id="searchButton">
+                      <i class="fas fa-search"></i>
+                    </button>
+                  </div>
+                  <div id="autocompleteResults" class="autocomplete-results"></div>
+                </div>
               </div>
-              <div id="autocompleteResults" class="autocomplete-results"></div>
-            </div>
-          </div>
 
-          <div id="searchResults" class="search-results mt-4">
-            <!-- Results will appear here -->
-            <div class="initial-state text-center text-muted">
-              <p><i class="fas fa-search fa-2x mb-3"></i></p>
-              <p>Type a card name above to find its ranking</p>
+              <div id="searchResults" class="search-results mt-4">
+                <!-- Results will appear here -->
+                <div class="initial-state text-center text-muted">
+                  <p><i class="fas fa-search fa-2x mb-3"></i></p>
+                  <p>Type a card name above to find its ranking</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Artist Search Tab -->
+            <div class="tab-pane fade" id="artist-search" role="tabpanel" aria-labelledby="artist-tab">
+              <div class="search-container mb-4">
+                <div class="form-group">
+                  <label for="artistSearchInput" class="form-label"
+                    >Search for an artist:</label
+                  >
+                  <div class="input-group">
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="artistSearchInput"
+                      placeholder="Start typing an artist name..."
+                      autocomplete="off"
+                    />
+                    <button class="btn btn-primary" id="artistSearchButton">
+                      <i class="fas fa-search"></i>
+                    </button>
+                  </div>
+                  <div id="artistAutocompleteResults" class="autocomplete-results"></div>
+                </div>
+              </div>
+
+              <div id="artistSearchResults" class="search-results mt-4">
+                <!-- Artist results will appear here -->
+                <div class="initial-state text-center text-muted">
+                  <p><i class="fas fa-user-paintbrush fa-2x mb-3"></i></p>
+                  <p>Type an artist name above to find their ranking</p>
+                </div>
+              </div>
             </div>
           </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
         </div>
       </div>
     </div>
@@ -135,6 +193,36 @@
     opacity: 1;
     color: #0d6efd;
   }
+  
+  /* Artist icon styling */
+  .artist-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 30px;
+    background-color: #f1f1f1;
+    border-radius: 50%;
+    margin-right: 10px;
+    color: #6c757d;
+  }
+  
+  /* Artist cards display */
+  .artist-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 15px;
+    margin-top: 1rem;
+  }
+  
+  .sample-card {
+    text-align: center;
+    transition: transform 0.2s;
+  }
+  
+  .sample-card:hover {
+    transform: scale(1.05);
+  }
 
   @media (max-width: 767.98px) {
     .card-result {
@@ -157,16 +245,24 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
+    // Card search elements
     const searchInput = document.getElementById("searchInput");
     const autocompleteResults = document.getElementById("autocompleteResults");
     const searchResults = document.getElementById("searchResults");
     const searchButton = document.getElementById("searchButton");
+    
+    // Artist search elements
+    const artistSearchInput = document.getElementById("artistSearchInput");
+    const artistAutocompleteResults = document.getElementById("artistAutocompleteResults");
+    const artistSearchResults = document.getElementById("artistSearchResults");
+    const artistSearchButton = document.getElementById("artistSearchButton");
 
     let typingTimer;
+    let artistTypingTimer;
     const doneTypingInterval = 300; // Wait time after typing stops (ms)
 
-    // Event listeners
-    searchInput.addEventListener("input", handleInput);
+    // Card search event listeners
+    searchInput.addEventListener("input", handleCardInput);
     searchInput.addEventListener("keydown", function (e) {
       if (e.key === "Enter") {
         searchCard();
@@ -174,13 +270,31 @@
     });
     searchButton.addEventListener("click", searchCard);
 
+    // Artist search event listeners
+    artistSearchInput.addEventListener("input", handleArtistInput);
+    artistSearchInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        searchArtist();
+      }
+    });
+    artistSearchButton.addEventListener("click", searchArtist);
+
     // Hide autocomplete when clicking outside
     document.addEventListener("click", function (e) {
+      // Hide card autocomplete
       if (
         !searchInput.contains(e.target) &&
         !autocompleteResults.contains(e.target)
       ) {
         autocompleteResults.style.display = "none";
+      }
+      
+      // Hide artist autocomplete
+      if (
+        !artistSearchInput.contains(e.target) &&
+        !artistAutocompleteResults.contains(e.target)
+      ) {
+        artistAutocompleteResults.style.display = "none";
       }
     });
 
@@ -194,7 +308,8 @@
       }
     });
 
-    function handleInput() {
+    // Card search functions
+    function handleCardInput() {
       clearTimeout(typingTimer);
       const query = searchInput.value.trim();
 
@@ -204,11 +319,11 @@
       }
 
       typingTimer = setTimeout(() => {
-        fetchAutocompleteResults(query);
+        fetchCardAutocompleteResults(query);
       }, doneTypingInterval);
     }
 
-    function fetchAutocompleteResults(query) {
+    function fetchCardAutocompleteResults(query) {
       fetch(`/api/search/autocomplete?q=${encodeURIComponent(query)}`)
         .then((response) => response.json())
         .then((data) => {
@@ -376,6 +491,163 @@
         </div>
       </div>
     `;
+    }
+
+    // Artist search functions
+    function handleArtistInput() {
+      clearTimeout(artistTypingTimer);
+      const query = artistSearchInput.value.trim();
+
+      if (query.length < 2) {
+        artistAutocompleteResults.style.display = "none";
+        return;
+      }
+
+      artistTypingTimer = setTimeout(() => {
+        fetchArtistAutocompleteResults(query);
+      }, doneTypingInterval);
+    }
+
+    function fetchArtistAutocompleteResults(query) {
+      fetch(`/api/search/artist/autocomplete?q=${encodeURIComponent(query)}`)
+        .then((response) => response.json())
+        .then((data) => {
+          displayArtistAutocompleteResults(data);
+        })
+        .catch((error) => {
+          console.error("Error fetching artist autocomplete results:", error);
+        });
+    }
+
+    function displayArtistAutocompleteResults(artists) {
+      artistAutocompleteResults.innerHTML = "";
+
+      if (artists.length === 0) {
+        artistAutocompleteResults.style.display = "none";
+        return;
+      }
+
+      artists.forEach((artist) => {
+        const item = document.createElement("div");
+        item.className = "autocomplete-item";
+
+        const iconDiv = document.createElement("div");
+        iconDiv.className = "artist-icon";
+        iconDiv.innerHTML = '<i class="fas fa-paintbrush"></i>';
+
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = artist.name;
+
+        item.appendChild(iconDiv);
+        item.appendChild(nameSpan);
+
+        item.addEventListener("click", () => {
+          artistSearchInput.value = artist.name;
+          artistAutocompleteResults.style.display = "none";
+          searchArtist();
+        });
+
+        artistAutocompleteResults.appendChild(item);
+      });
+
+      artistAutocompleteResults.style.display = "block";
+    }
+
+    function searchArtist() {
+      const query = artistSearchInput.value.trim();
+      if (query.length < 2) return;
+
+      fetch(`/api/search/artist?q=${encodeURIComponent(query)}`)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Artist not found');
+          }
+          return response.json();
+        })
+        .then((data) => {
+          displayArtistDetails(data);
+        })
+        .catch((error) => {
+          console.error("Error searching for artist:", error);
+          artistSearchResults.innerHTML = `
+          <div class="alert alert-info">
+            No artist found matching "${query}". Try another search term.
+          </div>
+        `;
+        });
+    }
+    
+    function displayArtistDetails(data) {
+      const { artist, averageRating, cardCount, rank, totalArtists, sampleCards } = data;
+      
+      // Calculate percentile
+      const percent = 100 - (rank / totalArtists) * 100;
+      const percentile = `(Top ${percent.toFixed(1)}%)`;
+      
+      // Generate sample card HTML
+      let samplesHTML = '';
+      if (sampleCards && sampleCards.length > 0) {
+        samplesHTML = `
+          <hr>
+          <h5>Notable Cards</h5>
+          <div class="artist-cards">
+        `;
+        
+        sampleCards.forEach(card => {
+          samplesHTML += `
+            <div class="sample-card">
+              <img 
+                src="${getArtCropUrl(card.scryfallId)}" 
+                alt="${card.name}" 
+                class="img-fluid rounded mb-1"
+                onerror="this.onerror=null; this.src='/api/card-back';"
+              >
+              <small class="d-block text-truncate" title="${card.name}">${card.name}</small>
+              <span class="badge bg-primary">${parseFloat(card.rating).toFixed(0)}</span>
+            </div>
+          `;
+        });
+        
+        samplesHTML += '</div>';
+      }
+      
+      artistSearchResults.innerHTML = `
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-3">
+              <div class="me-3">
+                <span class="fa-stack fa-2x">
+                  <i class="fas fa-circle fa-stack-2x text-muted"></i>
+                  <i class="fas fa-paintbrush fa-stack-1x fa-inverse"></i>
+                </span>
+              </div>
+              <div>
+                <h3 class="mb-0">${artist}</h3>
+                <div class="text-muted">${cardCount} cards in database</div>
+              </div>
+              <div class="ms-auto">
+                <div class="card-result-rank">
+                  #${rank}
+                </div>
+                <div class="text-end">${percentile}</div>
+              </div>
+            </div>
+            
+            <div class="row mb-3">
+              <div class="col">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h1>${averageRating}</h1>
+                    <div class="text-muted">Average Rating</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            ${samplesHTML}
+          </div>
+        </div>
+      `;
     }
 
     function getArtCropUrl(scryfallId) {

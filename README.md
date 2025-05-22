@@ -24,6 +24,7 @@ Candidates for being excluded:
 
 ## TODO
 
+- Set ranking; search for a set and get a list of how the cards in that set ranks
 - Ranking trends up/down
 - List most most popular red cards, etc etc on the Rankings page
 - Handle double sided cards
@@ -54,7 +55,7 @@ Where:
 - M = global average rating across all cards
 - C = weight constant (typically 5-10)
 
-### Card Selection Logic:
+### Card Selection Logic
 
 - Prioritize showing cards with fewer comparisons
 - Try to match cards with similar ratings (within ~200 points)
