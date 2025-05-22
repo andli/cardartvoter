@@ -11,8 +11,7 @@
           <div class="search-container mb-4">
             <div class="form-group">
               <label for="searchInput" class="form-label"
-                >Search for a card by name (beta functionality, use at own
-                risk):</label
+                >Search for a card by name:</label
               >
               <div class="input-group">
                 <input
@@ -122,6 +121,19 @@
 
   .card-thumbnail-container {
     position: relative;
+  }
+
+  /* Hidden admin target button styling */
+  .admin-target-button {
+    opacity: 0.05;
+    color: #ffffff;
+    transition: all 0.3s ease;
+    padding: 0 5px;
+  }
+
+  .admin-target-button:hover {
+    opacity: 1;
+    color: #0d6efd;
   }
 
   @media (max-width: 767.98px) {
@@ -356,6 +368,11 @@
           }" title="Copy Scryfall ID">
             <i class="fas fa-copy"></i>
           </button>
+          <a href="/?target_card_id=${
+            card.scryfallId
+          }" class="admin-target-button ms-2" title="Admin: Target this card">
+            <i class="fas fa-bullseye"></i>
+          </a>
         </div>
       </div>
     `;
