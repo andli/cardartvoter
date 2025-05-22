@@ -76,6 +76,28 @@ const statsService = {
   },
 
   /**
+   * Get count of cards without any comparisons with MongoDB-based caching
+   */
+  async getUncomparedCardsCount(force = false) {
+    return cacheService.getOrSet(
+      "stats:uncomparedCardsCount",
+      async () => {
+        try {
+          const count = await Card.countDocuments({
+            enabled: true,
+            comparisons: 0,
+          });
+          return count;
+        } catch (error) {
+          console.error("Error counting uncompared cards:", error);
+          return 0;
+        }
+      },
+      force
+    );
+  },
+
+  /**
    * Invalidate all stats caches when data changes
    * Use this after bulk operations or significant changes
    */

@@ -11,7 +11,12 @@
         ><%= typeof voteCount !== 'undefined' ? voteCount.toLocaleString() : '0'
         %></span
       >
-      votes cast<br />
+      votes cast •
+      <span id="uncomparedCounter"
+        ><%= typeof uncomparedCount !== 'undefined' ?
+        uncomparedCount.toLocaleString() : '0' %></span
+      >
+      cards need votes<br />
       Card data and images provided by
       <a href="https://scryfall.com" target="_blank">Scryfall</a>.
     </p>

@@ -24,6 +24,7 @@ exports.displayRankings = async (req, res) => {
     // Get statistics for consistent footer display
     const voteCount = await statsService.getVoteCount();
     const cardCount = await statsService.getEnabledCardCount();
+    const uncomparedCount = await statsService.getUncomparedCardsCount();
 
     res.render("rankings", {
       title: "Card Art Rankings",
@@ -35,6 +36,7 @@ exports.displayRankings = async (req, res) => {
       bottomSets,
       voteCount,
       cardCount,
+      uncomparedCount,
       getArtCropUrl: imageHelpers.getArtCropUrl,
       getCardUrl: imageHelpers.getCardUrl,
       getSetIconPath: (code) => `/images/set-icons/${code.toLowerCase()}.svg`, // For backward compatibility
